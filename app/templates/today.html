@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-header">
+  <h1>Allenamenti del {{ today.strftime('%d/%m/%Y') }}</h1>
+  <p>Vista mobile-first: registra velocemente la tua sessione quotidiana.</p>
+</section>
+
+<section class="grid two-col">
+  <article class="card">
+    <h2>Nuova Sessione</h2>
+    <form method="post" action="/sessions" class="form-grid">
+      <label>Allenamento
+        <select name="workout_id" required>
+          {% for workout in workouts %}
+            <option value="{{ workout.id }}">{{ workout.name }} ({{ workout.category }})</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Data
+        <input type="date" name="session_date" value="{{ today.isoformat() }}" required />
+      </label>
+
+      <label>Durata (min)
+        <input type="number" min="1" name="duration_minutes" placeholder="45" />
+      </label>
+
+      <label>Calorie
+        <input type="number" min="0" name="calories_burned" placeholder="350" />
+      </label>
+
+      <label>Note
+        <textarea name="notes" rows="3" placeholder="Come è andata oggi?"></textarea>
+      </label>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="completed" value="1" checked />
+        Sessione completata
+      </label>
+
+      <button type="submit">Registra Sessione</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2>Sessioni di Oggi</h2>
+    {% if sessions %}
+      <ul class="session-list">
+      {% for s in sessions %}
+        <li>
+          <div>
+            <strong>{{ s.workout.name }}</strong>
+            <small>{{ s.created_at.strftime('%H:%M') }}</small>
+          </div>
+          <div class="muted">
+            {{ s.duration_minutes or '-' }} min • {{ s.calories_burned or '-' }} kcal
+          </div>
+          {% if s.notes %}<p>{{ s.notes }}</p>{% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nessuna sessione registrata oggi.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

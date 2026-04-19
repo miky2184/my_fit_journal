@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-header desktop-note">
+  <h1>Definizione Allenamenti</h1>
+  <p>Questa sezione è pensata per desktop: crea e gestisci la tua libreria workout.</p>
+</section>
+
+<section class="grid two-col">
+  <article class="card">
+    <h2>Nuovo Allenamento</h2>
+    <form method="post" action="/workouts" class="form-grid">
+      <label>Nome
+        <input type="text" name="name" required placeholder="Upper Body Strength" />
+      </label>
+      <label>Categoria
+        <input type="text" name="category" required placeholder="Forza" />
+      </label>
+      <label>Area Target
+        <input type="text" name="target_area" required placeholder="Petto, Spalle, Tricipiti" />
+      </label>
+      <label>Durata Stimata (min)
+        <input type="number" min="1" name="estimated_minutes" required value="45" />
+      </label>
+      <label>Dettaglio Esercizi
+        <textarea name="exercise_block" rows="8" required placeholder="- Panca piana 4x8\n- Military press 4x10\n- Dip 3x12"></textarea>
+      </label>
+      <button type="submit">Salva Allenamento</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2>Libreria Workout</h2>
+    {% if workouts %}
+      <ul class="workout-list">
+      {% for w in workouts %}
+        <li>
+          <div class="workout-head">
+            <strong>{{ w.name }}</strong>
+            <span class="badge {{ 'ok' if w.active else 'off' }}">{{ 'Attivo' if w.active else 'Disattivo' }}</span>
+          </div>
+          <p class="muted">{{ w.category }} • {{ w.target_area }} • {{ w.estimated_minutes }} min</p>
+          <pre>{{ w.exercise_block }}</pre>
+          <div class="actions">
+            <form method="post" action="/workouts/{{ w.id }}/toggle">
+              <button type="submit" class="secondary">{{ 'Disattiva' if w.active else 'Attiva' }}</button>
+            </form>
+            <form method="post" action="/workouts/{{ w.id }}/delete" onsubmit="return confirm('Eliminare questo allenamento?');">
+              <button type="submit" class="danger">Elimina</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nessun allenamento ancora creato.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

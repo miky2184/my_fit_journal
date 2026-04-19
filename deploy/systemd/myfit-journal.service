@@ -1,0 +1,16 @@
+[Unit]
+Description=MyFit Journal FastAPI service
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/my_fit_journal
+EnvironmentFile=/opt/my_fit_journal/.env
+ExecStartPre=/bin/rm -f /run/myfit-journal.sock
+ExecStart=/opt/my_fit_journal/.venv/bin/uvicorn app.main:app --uds /run/myfit-journal.sock
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

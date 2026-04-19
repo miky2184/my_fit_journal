@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-header">
+  <h1>Dashboard Fitness</h1>
+  <p>Panoramica performance settimanale e trend ultimi 7 giorni.</p>
+</section>
+
+<section class="metrics">
+  <article class="metric-card">
+    <span>Allenamenti Creati</span>
+    <strong>{{ metrics.total_workouts }}</strong>
+  </article>
+  <article class="metric-card">
+    <span>Sessioni Settimana</span>
+    <strong>{{ metrics.total_sessions_week }}</strong>
+  </article>
+  <article class="metric-card">
+    <span>Adherence</span>
+    <strong>{{ metrics.weekly_adherence }}%</strong>
+  </article>
+  <article class="metric-card">
+    <span>Kcal Mese</span>
+    <strong>{{ metrics.month_calories }}</strong>
+  </article>
+</section>
+
+<section class="grid two-col">
+  <article class="card">
+    <h2>Trend Ultimi 7 Giorni</h2>
+    <div class="bar-chart">
+      {% for point in metrics.daily_series %}
+      <div class="bar-col">
+        <div class="bar" style="height: {{ 20 + (point.value * 18) }}px;"></div>
+        <span>{{ point.label }}</span>
+        <small>{{ point.value }}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Top Workout (30 giorni)</h2>
+    {% if metrics.top_workouts %}
+      <ul class="session-list">
+      {% for row in metrics.top_workouts %}
+        <li>
+          <div>
+            <strong>{{ row.name }}</strong>
+          </div>
+          <div class="muted">{{ row.sessions }} sessioni</div>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Non ci sono abbastanza dati per il ranking.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

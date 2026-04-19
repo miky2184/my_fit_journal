@@ -1,0 +1,1 @@
+"""MyFit Journal package."""

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MyFit Journal</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">MyFit Journal</div>
+    <nav>
+      <a class="{{ 'active' if page == 'today' else '' }}" href="/today">Oggi</a>
+      <a class="{{ 'active' if page == 'workouts' else '' }}" href="/workouts">Allenamenti</a>
+      <a class="{{ 'active' if page == 'dashboard' else '' }}" href="/dashboard">Dashboard</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
