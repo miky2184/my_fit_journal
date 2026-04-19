@@ -26,7 +26,52 @@
   const addExerciseBtn = document.getElementById('add-exercise');
   const muscleRoot = document.getElementById('muscle-react-root');
 
+  const exNameInput = document.getElementById('ex-name');
+  const exOptions = document.getElementById('exercise-options');
+  const exZoneLabel = document.getElementById('ex-zone-label');
+  const catalogDataNode = document.getElementById('exercise-catalog-data');
+
   let exercises = [];
+
+  const catalog = (() => {
+    if (!catalogDataNode) return [];
+    try {
+      const parsed = JSON.parse(catalogDataNode.textContent || '[]');
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (_) {
+      return [];
+    }
+  })();
+
+  const normalize = (value) => (value || '').trim().toLowerCase();
+
+  const catalogForCurrentSport = () => {
+    const sport = sportType?.value || 'gym';
+    return catalog.filter((item) => item.sport_type === sport);
+  };
+
+  const findCatalogByName = (name) => {
+    const value = normalize(name);
+    if (!value) return null;
+    return catalogForCurrentSport().find((item) => normalize(item.name) === value) || null;
+  };
+
+  const renderCatalogAutocomplete = () => {
+    if (!exOptions) return;
+    exOptions.innerHTML = '';
+    catalogForCurrentSport().forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.name;
+      exOptions.appendChild(option);
+    });
+  };
+
+  const refreshZonePreview = () => {
+    if (!exZoneLabel || !exNameInput) return;
+    const match = findCatalogByName(exNameInput.value);
+    exZoneLabel.value = match ? match.body_zone : '--';
+  };
 
   const showOrHideSportBlocks = () => {
     if (!sportType) return;
@@ -39,6 +84,9 @@
     if (exObjectiveLabel) {
       exObjectiveLabel.childNodes[0].nodeValue = `${objectiveBySport[sport] || 'Obiettivo'} `;
     }
+
+    renderCatalogAutocomplete();
+    refreshZonePreview();
   };
 
   const showOrHideRecurrence = () => {
@@ -82,24 +130,28 @@
   };
 
   const readExerciseFromForm = () => {
-    const name = document.getElementById('ex-name')?.value?.trim() || '';
-    if (!name) return null;
+    if (!exNameInput) return null;
+    const matched = findCatalogByName(exNameInput.value);
+    if (!matched) {
+      window.alert('Seleziona un esercizio valido dal catalogo suggerito.');
+      return null;
+    }
 
     const mode = document.getElementById('ex-mode')?.value || 'single';
     const sets = Number(document.getElementById('ex-sets')?.value || 0) || null;
     const reps = Number(document.getElementById('ex-reps')?.value || 0) || null;
     const durationMinutes = Number(document.getElementById('ex-duration')?.value || 0) || null;
     const objective = document.getElementById('ex-objective')?.value?.trim() || null;
-    const bodyZone = document.getElementById('ex-zone')?.value || 'full_body';
 
     return {
-      name,
+      exercise_catalog_id: matched.id,
+      name: matched.name,
       mode,
       sets,
       reps,
       duration_minutes: durationMinutes,
       objective,
-      body_zone: bodyZone,
+      body_zone: matched.body_zone,
     };
   };
 
@@ -108,11 +160,17 @@
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    if (exZoneLabel) exZoneLabel.value = '--';
   };
 
   if (sportType) {
     sportType.addEventListener('change', showOrHideSportBlocks);
     showOrHideSportBlocks();
+  }
+
+  if (exNameInput) {
+    exNameInput.addEventListener('input', refreshZonePreview);
+    exNameInput.addEventListener('change', refreshZonePreview);
   }
 
   if (recurrenceType) {

@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth import build_session_cookie_flags
 from app.config import get_settings
-from app.constants import BODY_ZONES, COURSE_OPTIONS, SPORT_OPTIONS
+from app.constants import COURSE_OPTIONS, SPORT_OPTIONS
 from app.db import get_session, init_db
 from app.services import (
     add_session,
@@ -25,6 +25,7 @@ from app.services import (
     list_planned_workouts_for_day,
     list_schedules,
     list_today_sessions,
+    list_exercise_catalog,
     list_workouts,
     parse_workout_details,
     toggle_workout_active,
@@ -108,6 +109,7 @@ def _parse_exercises_json(raw: str | None) -> list[dict]:
             continue
         cleaned.append(
             {
+                "exercise_catalog_id": int(item.get("exercise_catalog_id") or 0) or None,
                 "name": name,
                 "mode": str(item.get("mode", "single")),
                 "sets": int(item.get("sets") or 0) or None,
@@ -308,6 +310,7 @@ def workouts_page(request: Request):
     with get_session() as session:
         workouts = list_workouts(session, user_id=user_id)
         schedules = list_schedules(session, user_id=user_id)
+        exercise_catalog = list_exercise_catalog(session)
 
     enriched_workouts = []
     for workout in workouts:
@@ -320,9 +323,20 @@ def workouts_page(request: Request):
         {
             "workouts": enriched_workouts,
             "schedules": schedules,
+            "exercise_catalog_json": json.dumps(
+                [
+                    {
+                        "id": item.id,
+                        "sport_type": item.sport_type,
+                        "name": item.name,
+                        "body_zone": item.body_zone,
+                    }
+                    for item in exercise_catalog
+                ],
+                ensure_ascii=True,
+            ),
             "sport_options": SPORT_OPTIONS,
             "course_options": COURSE_OPTIONS,
-            "body_zones": BODY_ZONES,
             "page": "workouts",
         },
     )

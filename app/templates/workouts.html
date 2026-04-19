@@ -54,9 +54,11 @@
 
         <h3>Esercizi</h3>
         <div class="exercise-builder">
-          <label>Nome esercizio
-            <input type="text" id="ex-name" placeholder="Squat bilanciere" />
+          <label>Esercizio (catalogo)
+            <input type="text" id="ex-name" list="exercise-options" placeholder="es. shoulder press" autocomplete="off" />
+            <small class="muted">Seleziona un esercizio esistente (autocomplete).</small>
           </label>
+          <datalist id="exercise-options"></datalist>
           <label>Modalita
             <select id="ex-mode">
               <option value="single">Singolo</option>
@@ -75,12 +77,8 @@
           <label id="ex-objective-label">Kg target
             <input type="text" id="ex-objective" placeholder="60" />
           </label>
-          <label>Zona corpo
-            <select id="ex-zone">
-              {% for value, label in body_zones %}
-                <option value="{{ value }}">{{ label }}</option>
-              {% endfor %}
-            </select>
+          <label>Zona corpo (automatica)
+            <input type="text" id="ex-zone-label" value="--" readonly />
           </label>
           <button type="button" id="add-exercise" class="secondary">Aggiungi esercizio</button>
         </div>
@@ -112,6 +110,7 @@
         }
       }
     </script>
+    <script id="exercise-catalog-data" type="application/json">{{ exercise_catalog_json | safe }}</script>
     <script type="module" src="/static/js/muscle_highlighter.js"></script>
   </article>
 </section>

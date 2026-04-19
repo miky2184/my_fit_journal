@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.auth import hash_password, verify_password
 from app.constants import OBJECTIVE_LABEL_BY_SPORT, SPORT_COURSE
-from app.models import User, Workout, WorkoutSchedule, WorkoutSession
+from app.models import ExerciseCatalog, User, Workout, WorkoutSchedule, WorkoutSession
 
 
 def find_user_by_email(session: Session, email: str) -> User | None:
@@ -50,6 +50,14 @@ def list_workouts(session: Session, user_id: int) -> list[Workout]:
         .where(Workout.user_id == user_id)
         .order_by(desc(Workout.active), Workout.created_at.desc())
     )
+    return list(session.scalars(q))
+
+
+def list_exercise_catalog(session: Session, sport_type: str | None = None) -> list[ExerciseCatalog]:
+    q = select(ExerciseCatalog).where(ExerciseCatalog.active.is_(True))
+    if sport_type:
+        q = q.where(ExerciseCatalog.sport_type == sport_type)
+    q = q.order_by(ExerciseCatalog.sport_type.asc(), ExerciseCatalog.name.asc())
     return list(session.scalars(q))
 
 
@@ -111,6 +119,29 @@ def create_workout(
         "running": "Corsa",
         "course": "Corsi",
     }
+
+    if normalized_sport != SPORT_COURSE:
+        normalized_exercises = []
+        for ex in exercises:
+            catalog_id = ex.get("exercise_catalog_id")
+            if not catalog_id:
+                continue
+            catalog = session.get(ExerciseCatalog, int(catalog_id))
+            if not catalog or not catalog.active or catalog.sport_type != normalized_sport:
+                continue
+            normalized_exercises.append(
+                {
+                    "exercise_catalog_id": catalog.id,
+                    "name": catalog.name,
+                    "mode": ex.get("mode") or "single",
+                    "sets": ex.get("sets"),
+                    "reps": ex.get("reps"),
+                    "duration_minutes": ex.get("duration_minutes"),
+                    "objective": ex.get("objective"),
+                    "body_zone": catalog.body_zone,
+                }
+            )
+        exercises = normalized_exercises
 
     details = {
         "warmup": warmup,

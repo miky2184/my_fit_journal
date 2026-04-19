@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from app.config import get_settings
+from app.constants import EXERCISE_CATALOG_SEED
 
 
 settings = get_settings()
@@ -36,6 +37,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
         _upgrade_legacy_schema(conn)
+        _seed_exercise_catalog(conn)
 
 
 def _column_exists(conn, table_name: str, column_name: str) -> bool:
@@ -215,4 +217,23 @@ def _upgrade_legacy_schema(conn) -> None:
                 FOREIGN KEY (schedule_id) REFERENCES {schema}.workout_schedules(id) ON DELETE SET NULL
                 """
             )
+        )
+
+
+def _seed_exercise_catalog(conn) -> None:
+    schema = settings.db_schema
+    for row in EXERCISE_CATALOG_SEED:
+        conn.execute(
+            text(
+                f"""
+                INSERT INTO {schema}.exercise_catalog (sport_type, name, body_zone, active, created_at)
+                VALUES (:sport_type, :name, :body_zone, TRUE, NOW())
+                ON CONFLICT (sport_type, name) DO NOTHING
+                """
+            ),
+            {
+                "sport_type": row["sport_type"],
+                "name": row["name"],
+                "body_zone": row["body_zone"],
+            },
         )

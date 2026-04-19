@@ -38,3 +38,38 @@ OBJECTIVE_LABEL_BY_SPORT = {
     SPORT_SWIMMING: "Stile",
     SPORT_RUNNING: "Zona / passo",
 }
+
+EXERCISE_CATALOG_SEED = [
+    # Sala pesi
+    {"sport_type": SPORT_GYM, "name": "shoulder press", "body_zone": "shoulders"},
+    {"sport_type": SPORT_GYM, "name": "leg curl", "body_zone": "hamstrings"},
+    {"sport_type": SPORT_GYM, "name": "leg extension", "body_zone": "quads"},
+    {"sport_type": SPORT_GYM, "name": "chest press", "body_zone": "chest"},
+    {"sport_type": SPORT_GYM, "name": "lat machine", "body_zone": "back"},
+    {"sport_type": SPORT_GYM, "name": "pulley basso", "body_zone": "back"},
+    {"sport_type": SPORT_GYM, "name": "panca piana", "body_zone": "chest"},
+    {"sport_type": SPORT_GYM, "name": "squat", "body_zone": "quads"},
+    {"sport_type": SPORT_GYM, "name": "affondi", "body_zone": "glutes"},
+    {"sport_type": SPORT_GYM, "name": "stacchi rumeni", "body_zone": "hamstrings"},
+    {"sport_type": SPORT_GYM, "name": "alzate laterali", "body_zone": "shoulders"},
+    {"sport_type": SPORT_GYM, "name": "curl bilanciere", "body_zone": "arms"},
+    {"sport_type": SPORT_GYM, "name": "push down cavo", "body_zone": "arms"},
+    {"sport_type": SPORT_GYM, "name": "calf raise", "body_zone": "calves"},
+    {"sport_type": SPORT_GYM, "name": "plank", "body_zone": "core"},
+    # Nuoto
+    {"sport_type": SPORT_SWIMMING, "name": "vasche stile libero", "body_zone": "full_body"},
+    {"sport_type": SPORT_SWIMMING, "name": "vasche dorso", "body_zone": "back"},
+    {"sport_type": SPORT_SWIMMING, "name": "vasche rana", "body_zone": "full_body"},
+    {"sport_type": SPORT_SWIMMING, "name": "vasche farfalla", "body_zone": "shoulders"},
+    {"sport_type": SPORT_SWIMMING, "name": "gambe con tavoletta", "body_zone": "quads"},
+    {"sport_type": SPORT_SWIMMING, "name": "braccia pull buoy", "body_zone": "arms"},
+    {"sport_type": SPORT_SWIMMING, "name": "tecnica respirazione", "body_zone": "core"},
+    # Corsa
+    {"sport_type": SPORT_RUNNING, "name": "corsa lenta", "body_zone": "full_body"},
+    {"sport_type": SPORT_RUNNING, "name": "ripetute brevi", "body_zone": "quads"},
+    {"sport_type": SPORT_RUNNING, "name": "ripetute medie", "body_zone": "quads"},
+    {"sport_type": SPORT_RUNNING, "name": "progressivo", "body_zone": "full_body"},
+    {"sport_type": SPORT_RUNNING, "name": "fartlek", "body_zone": "full_body"},
+    {"sport_type": SPORT_RUNNING, "name": "corsa in salita", "body_zone": "glutes"},
+    {"sport_type": SPORT_RUNNING, "name": "corsa rigenerante", "body_zone": "calves"},
+]
