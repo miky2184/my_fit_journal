@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import Body from "https://esm.sh/react-muscle-highlighter@1.2.0?external=react,react-dom,react/jsx-runtime";
+import Body from "https://esm.sh/react-muscle-highlighter@1.2.0?external=react,react%2Fjsx-runtime";
 
 const rootEl = document.getElementById("muscle-react-root");
 
