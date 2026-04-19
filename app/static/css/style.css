@@ -528,6 +528,10 @@ fieldset {
   padding: 1rem;
 }
 
+.modal-overlay.hidden {
+  display: none;
+}
+
 .modal-card {
   width: 100%;
   max-width: 430px;
