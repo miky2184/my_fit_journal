@@ -6,7 +6,6 @@
     "target": "ES2021",
     "lib": ["ES2021"],
     "outDir": "dist",
-    "rootDir": "src",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "paths": {

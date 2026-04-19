@@ -11,6 +11,10 @@
       "cache": false,
       "persistent": true
     },
+    "@mfj/mobile#dev": {
+      "cache": false,
+      "persistent": true
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },
