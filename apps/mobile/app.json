@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "MyFit Journal",
+    "slug": "my-fit-journal",
+    "version": "1.0.0",
+    "scheme": "myfit",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#16a34a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.myfitjournal.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#16a34a"
+      },
+      "package": "com.myfitjournal.app"
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
