@@ -14,6 +14,7 @@
   const repeatWeeksWrap = document.getElementById('repeat-weeks-wrap');
 
   const phaseType = document.getElementById('phase-type');
+  const phaseDurationWrap = document.getElementById('phase-duration-wrap');
   const phaseDurationValue = document.getElementById('phase-duration-value');
   const phaseDurationType = document.getElementById('phase-duration-type');
   const phaseRepeatCount = document.getElementById('phase-repeat-count');
@@ -114,6 +115,7 @@
 
     if (courseWrap) courseWrap.classList.toggle('hidden', !isCourse);
     if (phaseBlock) phaseBlock.classList.toggle('hidden', isCourse);
+    if (phaseDurationWrap) phaseDurationWrap.classList.toggle('hidden', isGym);
 
     [runningIntensityModeWrap, runningIntensityValueWrap].forEach((el) => el?.classList.toggle('hidden', !isRunning));
     [swimStyleWrap, swimEquipmentWrap].forEach((el) => el?.classList.toggle('hidden', !isSwimming));
@@ -122,6 +124,15 @@
     fillPhaseTypeOptions();
     renderExerciseAutocomplete();
     if (!isGym && gymExercise) gymExercise.value = '';
+    if (phaseDurationType) {
+      if (isSwimming) {
+        phaseDurationType.innerHTML = '<option value="time">Tempo (min)</option><option value="meters">Metri</option>';
+      } else if (isRunning) {
+        phaseDurationType.innerHTML = '<option value="time">Tempo (min)</option><option value="meters">Metri</option><option value="kilometers">Kilometri</option>';
+      } else {
+        phaseDurationType.innerHTML = '<option value="time">Tempo (min)</option>';
+      }
+    }
     emitMuscleZones();
   };
 
@@ -182,16 +193,17 @@
   const readPhaseFromForm = () => {
     if (!sportType || !phaseType || !phaseDurationValue || !phaseDurationType) return null;
     const sport = currentSport();
-    const durationValue = (phaseDurationValue.value || '').trim();
-    if (!durationValue) {
+    const needsDuration = sport === 'running' || sport === 'swimming';
+    const durationValue = (phaseDurationValue?.value || '').trim();
+    if (needsDuration && !durationValue) {
       window.alert('Inserisci la durata della fase.');
       return null;
     }
 
     const phase = {
       phase_type: phaseType.value,
-      duration_type: phaseDurationType.value,
-      duration_value: durationValue,
+      duration_type: needsDuration ? (phaseDurationType?.value || 'time') : null,
+      duration_value: needsDuration ? durationValue : null,
       repeat_count: Number(phaseRepeatCount?.value || 1) || 1,
       body_zone: sport === 'gym' ? null : 'full_body',
     };

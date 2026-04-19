@@ -79,8 +79,8 @@ def _build_phase_summary(sport_type: str, phases: list[dict]) -> str:
     lines = []
     for idx, phase in enumerate(phases, start=1):
         phase_type = phase.get("phase_type") or "fase"
-        duration_type = phase.get("duration_type") or "time"
-        duration_value = phase.get("duration_value") or "-"
+        duration_type = phase.get("duration_type")
+        duration_value = phase.get("duration_value")
         repeats = phase.get("repeat_count") or 1
         exercise_name = phase.get("exercise_name")
         intensity = phase.get("intensity_value")
@@ -89,7 +89,9 @@ def _build_phase_summary(sport_type: str, phases: list[dict]) -> str:
         reps = phase.get("reps")
         weight = phase.get("weight_kg")
 
-        details = [f"durata {duration_value} ({duration_type})"]
+        details = []
+        if duration_value and duration_type:
+            details.append(f"durata {duration_value} ({duration_type})")
         if exercise_name:
             details.append(f"esercizio {exercise_name}")
         if intensity:
@@ -105,7 +107,7 @@ def _build_phase_summary(sport_type: str, phases: list[dict]) -> str:
         if repeats and repeats > 1:
             details.append(f"x{repeats}")
 
-        lines.append(f"{idx}. {phase_type}: " + " - ".join(details))
+        lines.append(f"{idx}. {phase_type}: " + (" - ".join(details) if details else "configurata"))
 
     return "\n".join(lines) if lines else "Allenamento a fasi"
 
@@ -114,18 +116,30 @@ def _normalize_phases(session: Session, sport_type: str, phases: list[dict]) -> 
     cleaned = []
     for phase in phases:
         phase_type = (phase.get("phase_type") or "").strip().lower()
-        duration_type = (phase.get("duration_type") or "time").strip().lower()
+        duration_type = (phase.get("duration_type") or "").strip().lower()
         duration_value = phase.get("duration_value")
         repeat_count = phase.get("repeat_count") or 1
-        if not phase_type or not duration_value:
+        if not phase_type:
+            continue
+
+        if sport_type in {"running", "swimming"} and not duration_value:
             continue
 
         item = {
             "phase_type": phase_type,
-            "duration_type": duration_type if duration_type in {"time", "distance"} else "time",
-            "duration_value": str(duration_value).strip(),
+            "duration_type": None,
+            "duration_value": None,
             "repeat_count": max(1, int(repeat_count)),
         }
+
+        if sport_type == "running":
+            allowed_units = {"time", "meters", "kilometers"}
+            item["duration_type"] = duration_type if duration_type in allowed_units else "time"
+            item["duration_value"] = str(duration_value).strip()
+        elif sport_type == "swimming":
+            allowed_units = {"time", "meters"}
+            item["duration_type"] = duration_type if duration_type in allowed_units else "time"
+            item["duration_value"] = str(duration_value).strip()
 
         if sport_type == "running":
             item["intensity_mode"] = (phase.get("intensity_mode") or "pace").strip().lower()

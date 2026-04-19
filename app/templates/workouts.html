@@ -41,18 +41,16 @@
             <select id="phase-type"></select>
           </label>
 
-          <label>Durata
+          <label id="phase-duration-wrap">Durata fase
             <div class="inline-inputs">
               <input type="number" min="1" id="phase-duration-value" placeholder="10" />
               <select id="phase-duration-type">
                 <option value="time">Tempo (min)</option>
-                <option value="distance">Distanza (m/km)</option>
+                <option value="meters">Metri</option>
+                <option value="kilometers">Kilometri</option>
               </select>
+              <input type="number" min="1" id="phase-repeat-count" value="1" placeholder="Ripetizioni fase" />
             </div>
-          </label>
-
-          <label>Ripetizioni fase
-            <input type="number" min="1" id="phase-repeat-count" value="1" />
           </label>
 
           <label id="phase-running-intensity-mode-wrap" class="running-only">Intensita
