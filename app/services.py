@@ -185,6 +185,9 @@ def create_workout(
     normalized_course = (course_name or "").strip() if normalized_sport == SPORT_COURSE else None
     if normalized_sport == SPORT_COURSE and not normalized_course:
         normalized_course = "corso libero"
+    resolved_name = name.strip()
+    if normalized_sport == SPORT_COURSE and normalized_course:
+        resolved_name = normalized_course
 
     category_map = {
         "swimming": "Nuoto",
@@ -198,7 +201,7 @@ def create_workout(
 
     workout = Workout(
         user_id=user_id,
-        name=name.strip(),
+        name=resolved_name,
         category=category_map.get(normalized_sport, "Workout"),
         target_area=_normalize_target_area(normalized_phases),
         estimated_minutes=max(1, estimated_minutes),
