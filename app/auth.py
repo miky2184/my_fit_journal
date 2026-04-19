@@ -24,8 +24,8 @@ def verify_password(password: str, stored_hash: str) -> bool:
     return hmac.compare_digest(candidate, f"{salt_value}${digest_hex}")
 
 
-def build_session_cookie_flags(app_env: str) -> dict[str, bool | str]:
-    secure = app_env.lower() == "production"
+def build_session_cookie_flags(app_env: str, session_https_only: bool) -> dict[str, bool | str]:
+    secure = session_https_only
     same_site = "lax"
     return {
         "https_only": secure,

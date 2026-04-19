@@ -30,6 +30,8 @@ Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
    cp .env.example .env
    ```
    Imposta una `SECRET_KEY` lunga e casuale in produzione.
+   Se pubblichi su HTTP interno (senza TLS), usa `SESSION_HTTPS_ONLY=false`.
+   Se passi a HTTPS, imposta `SESSION_HTTPS_ONLY=true`.
 3. Avvia app:
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 3500

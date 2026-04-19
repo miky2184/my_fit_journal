@@ -29,7 +29,10 @@ from app.services import (
 app = FastAPI(title="MyFit Journal")
 settings = get_settings()
 
-cookie_flags = build_session_cookie_flags(settings.app_env)
+cookie_flags = build_session_cookie_flags(
+    settings.app_env,
+    settings.session_https_only,
+)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.secret_key,

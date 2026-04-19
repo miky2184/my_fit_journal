@@ -19,6 +19,12 @@ class Settings:
     app_port: int = int(getenv("APP_PORT", "8000"))
     app_env: str = getenv("APP_ENV", "development")
     secret_key: str = getenv("SECRET_KEY", "dev-only-key")
+    session_https_only: bool = getenv("SESSION_HTTPS_ONLY", "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
     @property
     def sqlalchemy_url(self) -> str:
