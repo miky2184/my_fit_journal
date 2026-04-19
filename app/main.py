@@ -406,6 +406,7 @@ def calendar_page(request: Request, month: str | None = None):
         {
             "page": "calendar",
             "month_date": month_date,
+            "today_iso": date.today().isoformat(),
             "weeks": weeks,
             "occurrences": occurrences,
             "holiday_map": holiday_map,

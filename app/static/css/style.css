@@ -396,15 +396,21 @@ pre {
   margin-bottom: 1rem;
 }
 
+.calendar-board {
+  overflow-x: auto;
+}
+
 .month-grid {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .month-grid th,
 .month-grid td {
   border: 1px solid var(--line);
   vertical-align: top;
+  width: 14.285%;
 }
 
 .month-grid th {
@@ -419,9 +425,11 @@ pre {
 }
 
 .day-cell {
-  min-height: 120px;
+  height: 150px;
   padding: 0.25rem;
   background: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
 .day-cell.weekend {
@@ -430,6 +438,17 @@ pre {
 
 .day-cell.holiday {
   background: #ffe8e6;
+}
+
+.day-cell.today-mark {
+  outline: 2px solid #0b7a5a;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px rgba(11, 122, 90, 0.14);
+}
+
+.day-cell.today-mark .calendar-day-btn {
+  background: #0b7a5a;
+  color: #fff;
 }
 
 .day-cell.other-month {
@@ -463,6 +482,8 @@ pre {
   padding: 0;
   display: grid;
   gap: 0.25rem;
+  overflow: auto;
+  min-height: 0;
 }
 
 .calendar-events li {
@@ -494,6 +515,31 @@ fieldset {
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   padding: 0.5rem 0.6rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 24, 22, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 430px;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  padding: 1rem;
+}
+
+.modal-card h3 {
+  margin: 0 0 0.4rem;
 }
 
 @media (min-width: 880px) {

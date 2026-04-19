@@ -29,7 +29,7 @@
               {% set is_current = day.month == month_date.month %}
               {% set is_weekend = day.weekday() >= 5 %}
               {% set holiday_name = holiday_map.get(key) %}
-              <td class="day-cell {{ '' if is_current else 'other-month' }} {{ 'weekend' if is_weekend else '' }} {{ 'holiday' if holiday_name else '' }}" data-date="{{ key }}">
+              <td class="day-cell {{ '' if is_current else 'other-month' }} {{ 'weekend' if is_weekend else '' }} {{ 'holiday' if holiday_name else '' }} {{ 'today-mark' if key == today_iso else '' }}" data-date="{{ key }}">
                 <button type="button" class="calendar-day-btn" data-date="{{ key }}">{{ day.day }}</button>
                 {% if holiday_name %}
                   <small class="holiday-name">{{ holiday_name }}</small>
@@ -106,4 +106,16 @@
     </form>
   </article>
 </section>
+
+<div id="delete-series-modal" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal-card">
+    <h3>Rimuovi Allenamento</h3>
+    <p class="muted">Vuoi cancellare solo questa occorrenza o tutta la serie ricorrente?</p>
+    <div class="actions">
+      <button type="button" class="secondary" id="modal-cancel-btn">Annulla</button>
+      <button type="button" class="danger" id="modal-single-btn">Solo questa occorrenza</button>
+      <button type="button" class="danger" id="modal-series-btn">Intera serie</button>
+    </div>
+  </div>
+</div>
 {% endblock %}

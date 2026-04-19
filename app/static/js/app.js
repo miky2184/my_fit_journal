@@ -309,6 +309,48 @@
     });
   });
 
+  const modal = document.getElementById('delete-series-modal');
+  const modalCancelBtn = document.getElementById('modal-cancel-btn');
+  const modalSingleBtn = document.getElementById('modal-single-btn');
+  const modalSeriesBtn = document.getElementById('modal-series-btn');
+
+  const closeModal = () => {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.dataset.pendingForm = '';
+  };
+
+  const openModalForForm = (targetForm) => {
+    if (!modal) return;
+    if (!targetForm.id) {
+      targetForm.id = `remove-form-${Math.random().toString(36).slice(2, 10)}`;
+    }
+    modal.dataset.pendingForm = targetForm.id;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  const submitWithScope = (scope) => {
+    if (!modal) return;
+    const formId = modal.dataset.pendingForm;
+    if (!formId) return closeModal();
+    const targetForm = document.getElementById(formId);
+    if (!targetForm) return closeModal();
+    const scopeInput = targetForm.querySelector('.scope-input');
+    if (!scopeInput) return closeModal();
+    scopeInput.value = scope;
+    closeModal();
+    targetForm.submit();
+  };
+
+  modalCancelBtn?.addEventListener('click', closeModal);
+  modalSingleBtn?.addEventListener('click', () => submitWithScope('single'));
+  modalSeriesBtn?.addEventListener('click', () => submitWithScope('series'));
+  modal?.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+
   document.querySelectorAll('.calendar-remove-form').forEach((form) => {
     form.addEventListener('submit', (event) => {
       const recurring = form.dataset.recurring === '1';
@@ -321,16 +363,7 @@
       }
 
       event.preventDefault();
-      const answer = window.prompt("Scrivi 'serie' per cancellare tutta la serie, oppure 'solo' per questa occorrenza.", 'solo');
-      if (!answer) return;
-      const value = answer.trim().toLowerCase();
-      if (value === 'serie') {
-        scopeInput.value = 'series';
-        form.submit();
-      } else if (value === 'solo') {
-        scopeInput.value = 'single';
-        form.submit();
-      }
+      openModalForForm(form);
     });
   });
 
