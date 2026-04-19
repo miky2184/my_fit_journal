@@ -2,6 +2,8 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
+from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -39,6 +41,11 @@ app.add_middleware(
 BASE_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+class LoginPayload(BaseModel):
+    email: str
+    password: str
 
 
 @app.on_event("startup")
@@ -152,6 +159,31 @@ def login_action(
 
     request.session["user_id"] = user.id
     return RedirectResponse(url="/dashboard", status_code=303)
+
+
+@app.post("/api/login")
+def api_login(request: Request, payload: LoginPayload):
+    with get_session() as session:
+        user = authenticate_user(session, email=payload.email, password=payload.password)
+
+    if not user:
+        return JSONResponse(
+            {"ok": False, "error": "Credenziali non valide."},
+            status_code=401,
+        )
+
+    request.session["user_id"] = user.id
+    return JSONResponse(
+        {
+            "ok": True,
+            "user": {
+                "id": user.id,
+                "full_name": user.full_name,
+                "email": user.email,
+            },
+        },
+        status_code=200,
+    )
 
 
 @app.post("/logout")
