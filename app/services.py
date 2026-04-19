@@ -188,6 +188,8 @@ def create_workout(
     resolved_name = name.strip()
     if normalized_sport == SPORT_COURSE and normalized_course:
         resolved_name = normalized_course
+    if not resolved_name:
+        resolved_name = normalized_course or "workout senza nome"
 
     category_map = {
         "swimming": "Nuoto",

@@ -9,6 +9,8 @@
 
   const sportType = document.getElementById('sport-type');
   const courseWrap = document.getElementById('course-wrap');
+  const courseNameSelect = document.getElementById('course-name');
+  const workoutNameInput = document.getElementById('workout-name');
   const phaseBlock = document.getElementById('phase-block');
 
   const phaseType = document.getElementById('phase-type');
@@ -129,6 +131,13 @@
     }
 
     if (!isGym && gymExercise) gymExercise.value = '';
+
+    if (isCourse && workoutNameInput) {
+      const selectedCourse = (courseNameSelect?.value || '').trim();
+      if (selectedCourse) {
+        workoutNameInput.value = selectedCourse;
+      }
+    }
     emitMuscleZones();
   };
 
@@ -227,6 +236,16 @@
   if (sportType) {
     sportType.addEventListener('change', showSportSpecificInputs);
     showSportSpecificInputs();
+  }
+
+  if (courseNameSelect) {
+    courseNameSelect.addEventListener('change', () => {
+      if (currentSport() !== 'course' || !workoutNameInput) return;
+      const selectedCourse = (courseNameSelect.value || '').trim();
+      if (selectedCourse) {
+        workoutNameInput.value = selectedCourse;
+      }
+    });
   }
 
   if (gymExercise) {
