@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-wrap">
+  <article class="card auth-card">
+    <h1>Accedi</h1>
+    <p class="muted">Inserisci le tue credenziali per entrare nel tuo diario fitness.</p>
+
+    {% if error %}
+      <p class="error-text">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/login" class="form-grid">
+      <label>Email
+        <input type="email" name="email" required placeholder="nome@email.it" />
+      </label>
+      <label>Password
+        <input type="password" name="password" required placeholder="********" />
+      </label>
+      <button type="submit">Login</button>
+    </form>
+
+    <p class="auth-footer">Nuovo utente? <a href="/register">Crea un account</a></p>
+  </article>
+</section>
+{% endblock %}

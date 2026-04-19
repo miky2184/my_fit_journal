@@ -9,11 +9,23 @@
 <body>
   <header class="topbar">
     <div class="brand">MyFit Journal</div>
-    <nav>
-      <a class="{{ 'active' if page == 'today' else '' }}" href="/today">Oggi</a>
-      <a class="{{ 'active' if page == 'workouts' else '' }}" href="/workouts">Allenamenti</a>
-      <a class="{{ 'active' if page == 'dashboard' else '' }}" href="/dashboard">Dashboard</a>
-    </nav>
+    {% if current_user %}
+      <nav>
+        <a class="{{ 'active' if page == 'today' else '' }}" href="/today">Oggi</a>
+        <a class="{{ 'active' if page == 'workouts' else '' }}" href="/workouts">Allenamenti</a>
+        <a class="{{ 'active' if page == 'dashboard' else '' }}" href="/dashboard">Dashboard</a>
+      </nav>
+      <div class="user-nav">
+        <span>{{ current_user.full_name }}</span>
+        <form method="post" action="/logout">
+          <button type="submit" class="secondary small-btn">Logout</button>
+        </form>
+      </div>
+    {% else %}
+      <nav>
+        <a class="{{ 'active' if page == 'auth' else '' }}" href="/login">Login</a>
+      </nav>
+    {% endif %}
   </header>
 
   <main class="container">

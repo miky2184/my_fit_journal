@@ -3,6 +3,8 @@
 Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
 
 ## Funzionalita MVP
+- Registrazione e login utente con sessione autenticata.
+- Ogni utente vede solo i propri allenamenti, sessioni e statistiche.
 - Vista mobile `/today` per registrare e consultare sessioni quotidiane.
 - Vista desktop `/workouts` per definire libreria allenamenti.
 - Dashboard `/dashboard` con indicatori settimanali e trend ultimi 7 giorni.
@@ -19,14 +21,15 @@ Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
 ## Setup locale
 1. Crea ambiente virtuale:
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 2. Crea file ambiente:
    ```bash
    cp .env.example .env
    ```
+   Imposta una `SECRET_KEY` lunga e casuale in produzione.
 3. Avvia app:
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 3500
@@ -61,3 +64,5 @@ Nel file `.env` sono previsti questi valori:
 - `DB_PASSWORD=kkpo2981`
 
 Allo startup l'app crea lo schema `myfit` (se non esiste) e le tabelle necessarie.
+Se esistono tabelle legacy senza ownership utente, l'app aggiunge i campi `user_id`
+automaticamente e assegna i dati storici a un utente tecnico `legacy@myfit.local`.

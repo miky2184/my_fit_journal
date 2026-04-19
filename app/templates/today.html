@@ -8,6 +8,7 @@
 <section class="grid two-col">
   <article class="card">
     <h2>Nuova Sessione</h2>
+    {% if workouts %}
     <form method="post" action="/sessions" class="form-grid">
       <label>Allenamento
         <select name="workout_id" required>
@@ -40,6 +41,10 @@
 
       <button type="submit">Registra Sessione</button>
     </form>
+    {% else %}
+      <p class="muted">Non hai allenamenti attivi. Crea prima un workout nella sezione Allenamenti.</p>
+      <a href="/workouts" class="inline-link-btn">Vai ad Allenamenti</a>
+    {% endif %}
   </article>
 
   <article class="card">

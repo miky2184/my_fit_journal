@@ -16,6 +16,11 @@ class Workout(Base):
     __table_args__ = {"schema": SCHEMA}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(f"{SCHEMA}.users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     category: Mapped[str] = mapped_column(String(80), nullable=False)
     target_area: Mapped[str] = mapped_column(String(80), nullable=False)
@@ -28,6 +33,7 @@ class Workout(Base):
         back_populates="workout",
         cascade="all, delete-orphan",
     )
+    user: Mapped["User"] = relationship(back_populates="workouts")
 
 
 class WorkoutSession(Base):
@@ -35,6 +41,11 @@ class WorkoutSession(Base):
     __table_args__ = {"schema": SCHEMA}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(f"{SCHEMA}.users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     workout_id: Mapped[int] = mapped_column(
         ForeignKey(f"{SCHEMA}.workouts.id", ondelete="CASCADE"),
         nullable=False,
@@ -47,3 +58,24 @@ class WorkoutSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
     workout: Mapped[Workout] = relationship(back_populates="sessions")
+    user: Mapped["User"] = relationship(back_populates="sessions")
+
+
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = {"schema": SCHEMA}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    email: Mapped[str] = mapped_column(String(180), nullable=False, unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+    workouts: Mapped[list[Workout]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    sessions: Mapped[list[WorkoutSession]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
