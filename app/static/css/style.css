@@ -402,7 +402,7 @@ pre {
 
 .calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2.35fr) minmax(300px, 1fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -410,7 +410,6 @@ pre {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 860px;
 }
 
 .month-grid th,
@@ -432,7 +431,7 @@ pre {
 }
 
 .day-cell {
-  height: 150px;
+  height: 112px;
   padding: 0.25rem;
   background: #fff;
   display: flex;
@@ -491,6 +490,7 @@ pre {
   gap: 0.25rem;
   overflow: auto;
   min-height: 0;
+  max-height: 72px;
 }
 
 .calendar-events li {
@@ -503,6 +503,9 @@ pre {
   padding: 0.2rem 0.3rem;
   font-size: 0.8rem;
   background: #f9fcfb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .weekday-checks {
@@ -558,10 +561,6 @@ fieldset {
     grid-template-columns: 1fr 1fr;
   }
 
-  .calendar-layout {
-    grid-template-columns: minmax(0, 2.5fr) minmax(320px, 1fr);
-  }
-
   .exercise-builder {
     grid-template-columns: 1fr 1fr;
   }
@@ -579,5 +578,13 @@ fieldset {
   .calendar-toolbar {
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+
+  .day-cell {
+    height: 96px;
+  }
+
+  .calendar-events {
+    max-height: 56px;
   }
 }
