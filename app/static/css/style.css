@@ -400,10 +400,17 @@ pre {
   overflow-x: auto;
 }
 
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.35fr) minmax(300px, 1fr);
+  gap: 1rem;
+}
+
 .month-grid {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  min-width: 860px;
 }
 
 .month-grid th,
@@ -551,11 +558,26 @@ fieldset {
     grid-template-columns: 1fr 1fr;
   }
 
+  .calendar-layout {
+    grid-template-columns: minmax(0, 2.5fr) minmax(320px, 1fr);
+  }
+
   .exercise-builder {
     grid-template-columns: 1fr 1fr;
   }
 
   .metrics {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 879px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }
