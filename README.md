@@ -1,1 +1,0 @@
-# my_fit_journal
