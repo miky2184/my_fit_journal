@@ -71,6 +71,7 @@
     if (!exZoneLabel || !exNameInput) return;
     const match = findCatalogByName(exNameInput.value);
     exZoneLabel.value = match ? match.body_zone : '--';
+    emitMuscleZones(match ? match.body_zone : null);
   };
 
   const showOrHideSportBlocks = () => {
@@ -94,9 +95,12 @@
     repeatWeeksWrap.classList.toggle('hidden', recurrenceType.value !== 'weekly');
   };
 
-  const emitMuscleZones = () => {
+  const emitMuscleZones = (previewZone = null) => {
     if (!muscleRoot) return;
     const zones = exercises.map((ex) => ex.body_zone);
+    if (previewZone && previewZone !== '--') {
+      zones.push(previewZone);
+    }
     document.dispatchEvent(
       new CustomEvent('myfit:exercise-zones-changed', {
         detail: { zones },
