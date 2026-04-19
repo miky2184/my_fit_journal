@@ -30,23 +30,25 @@
               {% set is_weekend = day.weekday() >= 5 %}
               {% set holiday_name = holiday_map.get(key) %}
               <td class="day-cell {{ '' if is_current else 'other-month' }} {{ 'weekend' if is_weekend else '' }} {{ 'holiday' if holiday_name else '' }} {{ 'today-mark' if key == today_iso else '' }}" data-date="{{ key }}">
-                <button type="button" class="calendar-day-btn" data-date="{{ key }}">{{ day.day }}</button>
-                {% if holiday_name %}
-                  <small class="holiday-name">{{ holiday_name }}</small>
-                {% endif %}
-                <ul class="calendar-events">
-                  {% for entry in occurrences.get(key, []) %}
-                    <li>
-                      <span>{{ entry.workout.name }}</span>
-                      <form method="post" action="/calendar/remove" class="calendar-remove-form" data-recurring="{{ '1' if entry.schedule.recurrence_type == 'weekly' else '0' }}">
-                        <input type="hidden" name="schedule_id" value="{{ entry.schedule.id }}" />
-                        <input type="hidden" name="occurrence_date" value="{{ key }}" />
-                        <input type="hidden" name="scope" value="single" class="scope-input" />
-                        <button type="submit" class="danger small-btn">x</button>
-                      </form>
-                    </li>
-                  {% endfor %}
-                </ul>
+                <div class="day-cell-inner">
+                  <button type="button" class="calendar-day-btn" data-date="{{ key }}">{{ day.day }}</button>
+                  {% if holiday_name %}
+                    <small class="holiday-name">{{ holiday_name }}</small>
+                  {% endif %}
+                  <ul class="calendar-events">
+                    {% for entry in occurrences.get(key, []) %}
+                      <li>
+                        <span>{{ entry.workout.name }}</span>
+                        <form method="post" action="/calendar/remove" class="calendar-remove-form" data-recurring="{{ '1' if entry.schedule.recurrence_type == 'weekly' else '0' }}">
+                          <input type="hidden" name="schedule_id" value="{{ entry.schedule.id }}" />
+                          <input type="hidden" name="occurrence_date" value="{{ key }}" />
+                          <input type="hidden" name="scope" value="single" class="scope-input" />
+                          <button type="submit" class="danger small-btn">x</button>
+                        </form>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
               </td>
             {% endfor %}
           </tr>

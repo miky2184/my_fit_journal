@@ -419,6 +419,10 @@ pre {
   width: 14.285%;
 }
 
+.month-grid tbody tr {
+  height: 112px;
+}
+
 .month-grid th {
   padding: 0.45rem;
   font-size: 0.9rem;
@@ -434,8 +438,14 @@ pre {
   height: 112px;
   padding: 0.25rem;
   background: #fff;
+  overflow: hidden;
+}
+
+.day-cell-inner {
+  height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .day-cell.weekend {
@@ -504,6 +514,13 @@ pre {
   font-size: 0.8rem;
   background: #f9fcfb;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-events li > span {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -581,6 +598,10 @@ fieldset {
   }
 
   .day-cell {
+    height: 96px;
+  }
+
+  .month-grid tbody tr {
     height: 96px;
   }
 
