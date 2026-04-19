@@ -1,3 +1,14 @@
+# Node / JS
+node_modules/
+dist/
+.next/
+.expo/
+.turbo/
+*.env.local
+
+# macOS
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
