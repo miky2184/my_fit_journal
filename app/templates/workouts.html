@@ -127,54 +127,9 @@
   </article>
 </section>
 
-<section class="grid two-col">
+<section>
   <article class="card">
-    <h2>Pianifica su Calendario</h2>
-    <form method="post" action="/schedules" class="form-grid">
-      <label>Allenamento
-        <select name="workout_id" required>
-          {% for item in workouts %}
-            {% if item.workout.active %}
-              <option value="{{ item.workout.id }}">{{ item.workout.name }} ({{ item.workout.category }})</option>
-            {% endif %}
-          {% endfor %}
-        </select>
-      </label>
-      <label>Data di partenza
-        <input type="date" name="start_date" required />
-      </label>
-      <label>Tipo pianificazione
-        <select name="recurrence_type" id="recurrence-type">
-          <option value="once">Singola data</option>
-          <option value="weekly">Settimanale</option>
-        </select>
-      </label>
-      <label id="repeat-weeks-wrap" class="hidden">Numero settimane
-        <input type="number" min="1" max="12" name="repeat_weeks" value="4" />
-      </label>
-      <button type="submit">Salva pianificazione</button>
-    </form>
-
-    {% if schedules %}
-      <h3>Pianificazioni salvate</h3>
-      <ul class="session-list">
-        {% for sched in schedules %}
-          <li>
-            <strong>{{ sched.workout.name }}</strong>
-            <div class="muted">
-              {% if sched.recurrence_type == 'weekly' %}
-                ogni {{ ['lun','mar','mer','gio','ven','sab','dom'][sched.weekday or 0] }} per {{ sched.repeat_weeks }} settimane (da {{ sched.start_date.strftime('%d/%m/%Y') }})
-              {% else %}
-                una tantum il {{ sched.start_date.strftime('%d/%m/%Y') }}
-              {% endif %}
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  </article>
-
-  <article class="card">
+    <p class="muted">Per pianificare i workout nel mese usa il tab <a href="/calendar">Calendario</a>.</p>
     <h2>Libreria Allenamenti</h2>
     {% if workouts %}
       <ul class="workout-list">

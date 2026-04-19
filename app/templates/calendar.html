@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-header">
+  <h1>Calendario Allenamenti</h1>
+  <p>Pianifica nel mese, con ricorrenze avanzate e gestione serie/occorrenze.</p>
+</section>
+
+<section class="calendar-toolbar card">
+  <a class="inline-link-btn" href="/calendar?month={{ prev_month }}">Mese precedente</a>
+  <h2>{{ month_date.strftime('%B %Y')|title }}</h2>
+  <a class="inline-link-btn" href="/calendar?month={{ next_month }}">Mese successivo</a>
+</section>
+
+<section class="grid two-col">
+  <article class="card calendar-board">
+    <table class="month-grid">
+      <thead>
+        <tr>
+          {% for label in weekday_labels %}
+            <th class="{{ 'weekend' if loop.index >= 6 else '' }}">{{ label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in weeks %}
+          <tr>
+            {% for day in week %}
+              {% set key = day.isoformat() %}
+              {% set is_current = day.month == month_date.month %}
+              {% set is_weekend = day.weekday() >= 5 %}
+              {% set holiday_name = holiday_map.get(key) %}
+              <td class="day-cell {{ '' if is_current else 'other-month' }} {{ 'weekend' if is_weekend else '' }} {{ 'holiday' if holiday_name else '' }}" data-date="{{ key }}">
+                <button type="button" class="calendar-day-btn" data-date="{{ key }}">{{ day.day }}</button>
+                {% if holiday_name %}
+                  <small class="holiday-name">{{ holiday_name }}</small>
+                {% endif %}
+                <ul class="calendar-events">
+                  {% for entry in occurrences.get(key, []) %}
+                    <li>
+                      <span>{{ entry.workout.name }}</span>
+                      <form method="post" action="/calendar/remove" class="calendar-remove-form" data-recurring="{{ '1' if entry.schedule.recurrence_type == 'weekly' else '0' }}">
+                        <input type="hidden" name="schedule_id" value="{{ entry.schedule.id }}" />
+                        <input type="hidden" name="occurrence_date" value="{{ key }}" />
+                        <input type="hidden" name="scope" value="single" class="scope-input" />
+                        <button type="submit" class="danger small-btn">x</button>
+                      </form>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+
+  <article class="card">
+    <h2>Aggiungi Allenamento al Giorno</h2>
+    <form method="post" action="/schedules" class="form-grid" id="calendar-schedule-form">
+      <label>Giorno selezionato
+        <input type="date" name="start_date" id="schedule-start-date" required value="{{ month_date.isoformat()[:8] ~ '01' }}" />
+      </label>
+
+      <label>Allenamento
+        <select name="workout_id" required>
+          {% for w in workouts %}
+            <option value="{{ w.id }}">{{ w.name }} ({{ w.category }})</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Tipo pianificazione
+        <select name="recurrence_type" id="recurrence-type">
+          <option value="once">Solo questo giorno</option>
+          <option value="weekly">Ricorrente settimanale</option>
+        </select>
+      </label>
+
+      <fieldset id="recurrence-days-wrap" class="hidden">
+        <legend>Giorni della settimana</legend>
+        <div class="weekday-checks">
+          {% for idx, label in [(0,'Lun'),(1,'Mar'),(2,'Mer'),(3,'Gio'),(4,'Ven'),(5,'Sab'),(6,'Dom')] %}
+            <label class="check-inline"><input type="checkbox" name="recurrence_days" value="{{ idx }}" /> {{ label }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <label id="end-mode-wrap" class="hidden">Fine ricorrenza
+        <select name="end_mode" id="end-mode">
+          <option value="none">Senza fine</option>
+          <option value="weeks">Dopo X settimane</option>
+          <option value="date">Fino a data</option>
+        </select>
+      </label>
+
+      <label id="end-weeks-wrap" class="hidden">Numero settimane
+        <input type="number" min="1" max="52" name="end_after_weeks" value="4" />
+      </label>
+
+      <label id="end-date-wrap" class="hidden">Data fine
+        <input type="date" name="end_date" />
+      </label>
+
+      <button type="submit">Salva pianificazione</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

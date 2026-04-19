@@ -219,6 +219,36 @@ def _upgrade_legacy_schema(conn) -> None:
             )
         )
 
+    if not _column_exists(conn, "workout_schedules", "recurrence_days"):
+        conn.execute(text(f"ALTER TABLE {schema}.workout_schedules ADD COLUMN recurrence_days VARCHAR(40)"))
+        conn.execute(
+            text(
+                f"""
+                UPDATE {schema}.workout_schedules
+                SET recurrence_days = CAST(weekday AS VARCHAR)
+                WHERE recurrence_days IS NULL AND weekday IS NOT NULL
+                """
+            )
+        )
+
+    if not _column_exists(conn, "workout_schedules", "end_date"):
+        conn.execute(text(f"ALTER TABLE {schema}.workout_schedules ADD COLUMN end_date DATE"))
+
+    if not _column_exists(conn, "workout_schedules", "end_after_weeks"):
+        conn.execute(text(f"ALTER TABLE {schema}.workout_schedules ADD COLUMN end_after_weeks INTEGER"))
+        conn.execute(
+            text(
+                f"""
+                UPDATE {schema}.workout_schedules
+                SET end_after_weeks = repeat_weeks
+                WHERE end_after_weeks IS NULL AND repeat_weeks IS NOT NULL
+                """
+            )
+        )
+
+    if not _column_exists(conn, "workout_schedules", "excluded_dates_json"):
+        conn.execute(text(f"ALTER TABLE {schema}.workout_schedules ADD COLUMN excluded_dates_json TEXT"))
+
 
 def _seed_exercise_catalog(conn) -> None:
     schema = settings.db_schema

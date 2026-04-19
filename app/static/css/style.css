@@ -389,6 +389,113 @@ pre {
   background: linear-gradient(180deg, #4dc497, #0b7a5a);
 }
 
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.month-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.month-grid th,
+.month-grid td {
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.month-grid th {
+  padding: 0.45rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: #f2f6f5;
+}
+
+.month-grid th.weekend {
+  background: #ffeceb;
+}
+
+.day-cell {
+  min-height: 120px;
+  padding: 0.25rem;
+  background: #fff;
+}
+
+.day-cell.weekend {
+  background: #fff5f4;
+}
+
+.day-cell.holiday {
+  background: #ffe8e6;
+}
+
+.day-cell.other-month {
+  opacity: 0.45;
+}
+
+.calendar-day-btn {
+  border: none;
+  background: transparent;
+  color: #314643;
+  font-weight: 700;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0.4rem;
+}
+
+.calendar-day-btn:hover {
+  background: #e7efec;
+  color: #1a2a26;
+}
+
+.holiday-name {
+  display: block;
+  color: #8a3a32;
+  font-size: 0.72rem;
+  margin-top: 0.1rem;
+}
+
+.calendar-events {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.calendar-events li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  border: 1px solid #d9e3e0;
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.8rem;
+  background: #f9fcfb;
+}
+
+.weekday-checks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.check-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+}
+
 @media (min-width: 880px) {
   .grid.two-col {
     grid-template-columns: 1fr 1fr;

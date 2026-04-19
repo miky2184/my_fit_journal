@@ -1,5 +1,6 @@
+import calendar
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth import build_session_cookie_flags
+from app.calendar_it import italy_holidays
 from app.config import get_settings
 from app.constants import COURSE_OPTIONS, SPORT_OPTIONS
 from app.db import get_session, init_db
@@ -22,12 +24,13 @@ from app.services import (
     dashboard_metrics,
     delete_workout,
     get_user_by_id,
-    list_planned_workouts_for_day,
-    list_schedules,
-    list_today_sessions,
+    list_calendar_occurrences_for_month,
     list_exercise_catalog,
+    list_planned_workouts_for_day,
+    list_today_sessions,
     list_workouts,
     parse_workout_details,
+    remove_schedule_occurrence,
     toggle_workout_active,
 )
 
@@ -108,8 +111,8 @@ def _parse_phases_json(raw: str | None) -> list[dict]:
             {
                 "exercise_catalog_id": int(item.get("exercise_catalog_id") or 0) or None,
                 "phase_type": str(item.get("phase_type", "")).strip().lower(),
-                "duration_type": str(item.get("duration_type", "time")).strip().lower(),
-                "duration_value": str(item.get("duration_value", "")).strip(),
+                "duration_type": str(item.get("duration_type", "")).strip().lower() or None,
+                "duration_value": str(item.get("duration_value", "")).strip() or None,
                 "repeat_count": int(item.get("repeat_count") or 1),
                 "reps": int(item.get("reps") or 0) or None,
                 "weight_kg": float(item.get("weight_kg") or 0) or None,
@@ -121,6 +124,15 @@ def _parse_phases_json(raw: str | None) -> list[dict]:
             }
         )
     return cleaned
+
+
+def _month_start(month_str: str | None) -> date:
+    if month_str:
+        try:
+            return date.fromisoformat(f"{month_str}-01")
+        except ValueError:
+            pass
+    return date.today().replace(day=1)
 
 
 @app.get("/")
@@ -310,7 +322,6 @@ def workouts_page(request: Request):
 
     with get_session() as session:
         workouts = list_workouts(session, user_id=user_id)
-        schedules = list_schedules(session, user_id=user_id)
         exercise_catalog = list_exercise_catalog(session)
 
     enriched_workouts = []
@@ -323,7 +334,6 @@ def workouts_page(request: Request):
         "workouts.html",
         {
             "workouts": enriched_workouts,
-            "schedules": schedules,
             "exercise_catalog_json": json.dumps(
                 [
                     {
@@ -371,28 +381,106 @@ def create_workout_action(
     return RedirectResponse(url="/workouts", status_code=303)
 
 
+@app.get("/calendar")
+def calendar_page(request: Request, month: str | None = None):
+    user_id = require_user_id(request)
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    month_date = _month_start(month)
+    cal = calendar.Calendar(firstweekday=0)
+    weeks = cal.monthdatescalendar(month_date.year, month_date.month)
+
+    prev_month = (month_date.replace(day=1) - timedelta(days=1)).replace(day=1)
+    next_month = (month_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    with get_session() as session:
+        workouts = [w for w in list_workouts(session, user_id=user_id) if w.active]
+        occurrences = list_calendar_occurrences_for_month(session, user_id=user_id, month=month_date)
+
+    holiday_map = {k.isoformat(): v for k, v in italy_holidays(month_date.year).items()}
+
+    return render(
+        request,
+        "calendar.html",
+        {
+            "page": "calendar",
+            "month_date": month_date,
+            "weeks": weeks,
+            "occurrences": occurrences,
+            "holiday_map": holiday_map,
+            "workouts": workouts,
+            "prev_month": prev_month.strftime("%Y-%m"),
+            "next_month": next_month.strftime("%Y-%m"),
+            "weekday_labels": ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+        },
+    )
+
+
 @app.post("/schedules")
 def create_schedule_action(
     request: Request,
     workout_id: int = Form(...),
     start_date: str = Form(...),
     recurrence_type: str = Form("once"),
-    repeat_weeks: int | None = Form(default=None),
+    recurrence_days: list[str] | None = Form(default=None),
+    end_mode: str = Form("none"),
+    end_after_weeks: int | None = Form(default=None),
+    end_date: str | None = Form(default=None),
 ):
     user_id = require_user_id(request)
     if not user_id:
         return RedirectResponse(url="/login", status_code=302)
+
+    selected_days = []
+    for raw in recurrence_days or []:
+        try:
+            day = int(raw)
+        except ValueError:
+            continue
+        if 0 <= day <= 6:
+            selected_days.append(day)
+
+    resolved_end_date = date.fromisoformat(end_date) if end_mode == "date" and end_date else None
+    resolved_end_weeks = end_after_weeks if end_mode == "weeks" else None
+    start = date.fromisoformat(start_date)
 
     with get_session() as session:
         create_schedule(
             session=session,
             user_id=user_id,
             workout_id=workout_id,
-            start_date=date.fromisoformat(start_date),
+            start_date=start,
             recurrence_type=recurrence_type,
-            repeat_weeks=repeat_weeks,
+            recurrence_days=selected_days,
+            end_after_weeks=resolved_end_weeks,
+            end_date=resolved_end_date,
         )
-    return RedirectResponse(url="/workouts", status_code=303)
+    return RedirectResponse(url=f"/calendar?month={start.strftime('%Y-%m')}", status_code=303)
+
+
+@app.post("/calendar/remove")
+def remove_calendar_occurrence_action(
+    request: Request,
+    schedule_id: int = Form(...),
+    occurrence_date: str = Form(...),
+    scope: str = Form("single"),
+):
+    user_id = require_user_id(request)
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    day = date.fromisoformat(occurrence_date)
+    with get_session() as session:
+        remove_schedule_occurrence(
+            session=session,
+            user_id=user_id,
+            schedule_id=schedule_id,
+            occurrence_date=day,
+            scope=scope,
+        )
+
+    return RedirectResponse(url=f"/calendar?month={day.strftime('%Y-%m')}", status_code=303)
 
 
 @app.post("/workouts/{workout_id}/toggle")

@@ -1,5 +1,6 @@
 import json
 from datetime import date, timedelta
+import calendar
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, joinedload
@@ -246,14 +247,20 @@ def create_schedule(
     workout_id: int,
     start_date: date,
     recurrence_type: str,
-    repeat_weeks: int | None,
+    recurrence_days: list[int] | None,
+    end_after_weeks: int | None,
+    end_date: date | None,
 ) -> WorkoutSchedule | None:
     workout = session.scalar(select(Workout).where(Workout.id == workout_id, Workout.user_id == user_id))
     if not workout:
         return None
 
     normalized_recurrence = recurrence_type if recurrence_type in {"once", "weekly"} else "once"
-    weeks = max(1, min(12, repeat_weeks or 1)) if normalized_recurrence == "weekly" else None
+    days = sorted({d for d in (recurrence_days or []) if 0 <= d <= 6})
+    if normalized_recurrence == "weekly" and not days:
+        days = [start_date.weekday()]
+
+    weeks = max(1, min(52, end_after_weeks or 1)) if normalized_recurrence == "weekly" and end_after_weeks else None
 
     schedule = WorkoutSchedule(
         user_id=user_id,
@@ -262,6 +269,10 @@ def create_schedule(
         recurrence_type=normalized_recurrence,
         weekday=start_date.weekday() if normalized_recurrence == "weekly" else None,
         repeat_weeks=weeks,
+        recurrence_days=",".join(str(d) for d in days) if normalized_recurrence == "weekly" else None,
+        end_after_weeks=weeks,
+        end_date=end_date if normalized_recurrence == "weekly" else None,
+        excluded_dates_json="[]",
         active=True,
     )
     session.add(schedule)
@@ -270,20 +281,55 @@ def create_schedule(
     return schedule
 
 
+def _schedule_days(schedule: WorkoutSchedule) -> set[int]:
+    if schedule.recurrence_days:
+        try:
+            return {int(x) for x in schedule.recurrence_days.split(",") if x.strip() != ""}
+        except ValueError:
+            pass
+    if schedule.weekday is not None:
+        return {schedule.weekday}
+    return {schedule.start_date.weekday()}
+
+
+def _schedule_excluded_dates(schedule: WorkoutSchedule) -> set[date]:
+    if not schedule.excluded_dates_json:
+        return set()
+    try:
+        payload = json.loads(schedule.excluded_dates_json)
+    except json.JSONDecodeError:
+        return set()
+    if not isinstance(payload, list):
+        return set()
+    out = set()
+    for item in payload:
+        try:
+            out.add(date.fromisoformat(str(item)))
+        except ValueError:
+            continue
+    return out
+
+
 def schedule_matches_day(schedule: WorkoutSchedule, day: date) -> bool:
     if not schedule.active:
+        return False
+    if day in _schedule_excluded_dates(schedule):
         return False
     if schedule.recurrence_type == "once":
         return day == schedule.start_date
     if schedule.recurrence_type == "weekly":
         if day < schedule.start_date:
             return False
-        if schedule.weekday is None or day.weekday() != schedule.weekday:
+        if schedule.end_date and day > schedule.end_date:
+            return False
+        if day.weekday() not in _schedule_days(schedule):
             return False
         delta_days = (day - schedule.start_date).days
         week_index = delta_days // 7
-        repeat_weeks = schedule.repeat_weeks or 1
-        return 0 <= week_index < repeat_weeks
+        repeat_weeks = schedule.end_after_weeks or schedule.repeat_weeks
+        if repeat_weeks:
+            return 0 <= week_index < repeat_weeks
+        return week_index >= 0
     return False
 
 
@@ -294,6 +340,53 @@ def list_planned_workouts_for_day(session: Session, user_id: int, day: date) -> 
         if sched.workout and schedule_matches_day(sched, day):
             items.append({"schedule": sched, "workout": sched.workout})
     return items
+
+
+def list_calendar_occurrences_for_month(session: Session, user_id: int, month: date) -> dict[str, list[dict]]:
+    schedules = list_schedules(session, user_id)
+    _, last_day = calendar.monthrange(month.year, month.month)
+    start = date(month.year, month.month, 1)
+    end = date(month.year, month.month, last_day)
+
+    by_day: dict[str, list[dict]] = {}
+    current = start
+    while current <= end:
+        key = current.isoformat()
+        by_day[key] = []
+        for sched in schedules:
+            if sched.workout and schedule_matches_day(sched, current):
+                by_day[key].append({"schedule": sched, "workout": sched.workout})
+        current += timedelta(days=1)
+    return by_day
+
+
+def remove_schedule_occurrence(
+    session: Session,
+    user_id: int,
+    schedule_id: int,
+    occurrence_date: date,
+    scope: str,
+) -> bool:
+    schedule = session.scalar(
+        select(WorkoutSchedule).where(
+            WorkoutSchedule.id == schedule_id,
+            WorkoutSchedule.user_id == user_id,
+        )
+    )
+    if not schedule:
+        return False
+
+    normalized_scope = scope if scope in {"single", "series"} else "single"
+    if normalized_scope == "series" or schedule.recurrence_type == "once":
+        session.delete(schedule)
+        session.commit()
+        return True
+
+    excluded = _schedule_excluded_dates(schedule)
+    excluded.add(occurrence_date)
+    schedule.excluded_dates_json = json.dumps(sorted(d.isoformat() for d in excluded), ensure_ascii=True)
+    session.commit()
+    return True
 
 
 def add_session(

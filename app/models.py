@@ -83,6 +83,10 @@ class WorkoutSchedule(Base):
     recurrence_type: Mapped[str] = mapped_column(String(20), nullable=False, default="once")
     weekday: Mapped[int | None] = mapped_column(Integer)
     repeat_weeks: Mapped[int | None] = mapped_column(Integer)
+    recurrence_days: Mapped[str | None] = mapped_column(String(40))
+    end_date: Mapped[date | None] = mapped_column(Date)
+    end_after_weeks: Mapped[int | None] = mapped_column(Integer)
+    excluded_dates_json: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 

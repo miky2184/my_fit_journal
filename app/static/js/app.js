@@ -10,8 +10,6 @@
   const sportType = document.getElementById('sport-type');
   const courseWrap = document.getElementById('course-wrap');
   const phaseBlock = document.getElementById('phase-block');
-  const recurrenceType = document.getElementById('recurrence-type');
-  const repeatWeeksWrap = document.getElementById('repeat-weeks-wrap');
 
   const phaseType = document.getElementById('phase-type');
   const phaseDurationWrap = document.getElementById('phase-duration-wrap');
@@ -64,11 +62,8 @@
   })();
 
   const normalize = (value) => (value || '').trim().toLowerCase();
-
   const currentSport = () => sportType?.value || 'gym';
-
   const catalogForSport = (sport) => catalog.filter((item) => item.sport_type === sport);
-
   const findCatalogExercise = (name, sport) => {
     const val = normalize(name);
     if (!val) return null;
@@ -84,8 +79,7 @@
 
   const fillPhaseTypeOptions = () => {
     if (!phaseType || !sportType) return;
-    const sport = currentSport();
-    const options = phaseTypeBySport[sport] || [];
+    const options = phaseTypeBySport[currentSport()] || [];
     phaseType.innerHTML = '';
     options.forEach((value) => {
       const opt = document.createElement('option');
@@ -123,7 +117,7 @@
 
     fillPhaseTypeOptions();
     renderExerciseAutocomplete();
-    if (!isGym && gymExercise) gymExercise.value = '';
+
     if (phaseDurationType) {
       if (isSwimming) {
         phaseDurationType.innerHTML = '<option value="time">Tempo (min)</option><option value="meters">Metri</option>';
@@ -133,19 +127,14 @@
         phaseDurationType.innerHTML = '<option value="time">Tempo (min)</option>';
       }
     }
+
+    if (!isGym && gymExercise) gymExercise.value = '';
     emitMuscleZones();
   };
 
-  const showOrHideRecurrence = () => {
-    if (!recurrenceType || !repeatWeeksWrap) return;
-    repeatWeeksWrap.classList.toggle('hidden', recurrenceType.value !== 'weekly');
-  };
-
   const phaseToLabel = (phase) => {
-    const chunks = [
-      `${phase.phase_type}`,
-      `${phase.duration_value} (${phase.duration_type})`,
-    ];
+    const chunks = [`${phase.phase_type}`];
+    if (phase.duration_value && phase.duration_type) chunks.push(`${phase.duration_value} (${phase.duration_type})`);
     if (phase.intensity_value) chunks.push(`intensita ${phase.intensity_value}`);
     if (phase.swim_style) chunks.push(`stile ${phase.swim_style}`);
     if (phase.equipment) chunks.push(`attrezzatura ${phase.equipment}`);
@@ -191,8 +180,9 @@
   };
 
   const readPhaseFromForm = () => {
-    if (!sportType || !phaseType || !phaseDurationValue || !phaseDurationType) return null;
+    if (!sportType || !phaseType) return null;
     const sport = currentSport();
+
     const needsDuration = sport === 'running' || sport === 'swimming';
     const durationValue = (phaseDurationValue?.value || '').trim();
     if (needsDuration && !durationValue) {
@@ -240,19 +230,12 @@
   }
 
   if (gymExercise) {
-    gymExercise.addEventListener('input', () => {
+    const syncPreview = () => {
       const selected = findCatalogExercise(gymExercise.value, 'gym');
       emitMuscleZones(selected ? selected.body_zone : null);
-    });
-    gymExercise.addEventListener('change', () => {
-      const selected = findCatalogExercise(gymExercise.value, 'gym');
-      emitMuscleZones(selected ? selected.body_zone : null);
-    });
-  }
-
-  if (recurrenceType) {
-    recurrenceType.addEventListener('change', showOrHideRecurrence);
-    showOrHideRecurrence();
+    };
+    gymExercise.addEventListener('input', syncPreview);
+    gymExercise.addEventListener('change', syncPreview);
   }
 
   if (addPhaseBtn) {
@@ -273,11 +256,83 @@
     const option = todayWorkout.options[todayWorkout.selectedIndex];
     todayScheduleId.value = option?.dataset?.scheduleId || '';
   };
-
   if (todayWorkout) {
     todayWorkout.addEventListener('change', syncTodaySchedule);
     syncTodaySchedule();
   }
+
+  const recurrenceType = document.getElementById('recurrence-type');
+  const recurrenceDaysWrap = document.getElementById('recurrence-days-wrap');
+  const endModeWrap = document.getElementById('end-mode-wrap');
+  const endMode = document.getElementById('end-mode');
+  const endWeeksWrap = document.getElementById('end-weeks-wrap');
+  const endDateWrap = document.getElementById('end-date-wrap');
+
+  const toggleRecurrenceBlocks = () => {
+    if (!recurrenceType) return;
+    const weekly = recurrenceType.value === 'weekly';
+    recurrenceDaysWrap?.classList.toggle('hidden', !weekly);
+    endModeWrap?.classList.toggle('hidden', !weekly);
+    if (!weekly) {
+      endWeeksWrap?.classList.add('hidden');
+      endDateWrap?.classList.add('hidden');
+      return;
+    }
+    const mode = endMode?.value || 'none';
+    endWeeksWrap?.classList.toggle('hidden', mode !== 'weeks');
+    endDateWrap?.classList.toggle('hidden', mode !== 'date');
+  };
+
+  recurrenceType?.addEventListener('change', toggleRecurrenceBlocks);
+  endMode?.addEventListener('change', toggleRecurrenceBlocks);
+  toggleRecurrenceBlocks();
+
+  document.querySelectorAll('.calendar-day-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const selected = btn.dataset.date;
+      const startDateInput = document.getElementById('schedule-start-date');
+      if (startDateInput && selected) {
+        startDateInput.value = selected;
+      }
+
+      if (recurrenceType?.value === 'weekly') {
+        const d = new Date(`${selected}T00:00:00`);
+        if (!Number.isNaN(d.getTime())) {
+          const jsDay = d.getDay();
+          const mondayBased = (jsDay + 6) % 7;
+          const checks = document.querySelectorAll('input[name="recurrence_days"]');
+          checks.forEach((ck) => {
+            ck.checked = String(mondayBased) === ck.value;
+          });
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll('.calendar-remove-form').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      const recurring = form.dataset.recurring === '1';
+      const scopeInput = form.querySelector('.scope-input');
+      if (!scopeInput) return;
+
+      if (!recurring) {
+        scopeInput.value = 'single';
+        return;
+      }
+
+      event.preventDefault();
+      const answer = window.prompt("Scrivi 'serie' per cancellare tutta la serie, oppure 'solo' per questa occorrenza.", 'solo');
+      if (!answer) return;
+      const value = answer.trim().toLowerCase();
+      if (value === 'serie') {
+        scopeInput.value = 'series';
+        form.submit();
+      } else if (value === 'solo') {
+        scopeInput.value = 'single';
+        form.submit();
+      }
+    });
+  });
 
   emitMuscleZones();
 })();

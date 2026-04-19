@@ -12,6 +12,12 @@ Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
   - scegliere esercizi da catalogo DB con autocomplete (zona muscolare automatica),
   - gestire corsi con sola durata,
   - associare allenamenti al calendario con ricorrenza settimanale.
+- Tab `/calendar` con vista mensile:
+  - weekend e festivi italiani evidenziati,
+  - click su giorno per pianificare un workout,
+  - ricorrenze multi-giorno (qualsiasi combinazione di giorni settimana),
+  - fine ricorrenza per numero settimane o data,
+  - rimozione singola occorrenza o intera serie.
 - Mappa corpo fronte/retro con evidenza aree coinvolte dagli esercizi.
 - Dashboard `/dashboard` con indicatori settimanali e trend ultimi 7 giorni.
 - Schema PostgreSQL dedicato: `myfit`.
