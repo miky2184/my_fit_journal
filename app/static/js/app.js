@@ -9,36 +9,54 @@
 
   const sportType = document.getElementById('sport-type');
   const courseWrap = document.getElementById('course-wrap');
-  const detailedBlock = document.getElementById('detailed-block');
-  const exObjectiveLabel = document.getElementById('ex-objective-label');
+  const phaseBlock = document.getElementById('phase-block');
   const recurrenceType = document.getElementById('recurrence-type');
   const repeatWeeksWrap = document.getElementById('repeat-weeks-wrap');
 
-  const objectiveBySport = {
-    gym: 'Kg target',
-    swimming: 'Stile',
-    running: 'Zona / passo',
-    course: 'Obiettivo',
-  };
+  const phaseType = document.getElementById('phase-type');
+  const phaseDurationValue = document.getElementById('phase-duration-value');
+  const phaseDurationType = document.getElementById('phase-duration-type');
+  const phaseRepeatCount = document.getElementById('phase-repeat-count');
 
-  const exercisesJsonInput = document.getElementById('exercises-json');
-  const exerciseList = document.getElementById('exercise-list');
-  const addExerciseBtn = document.getElementById('add-exercise');
-  const muscleRoot = document.getElementById('muscle-react-root');
+  const runningIntensityModeWrap = document.getElementById('phase-running-intensity-mode-wrap');
+  const runningIntensityMode = document.getElementById('phase-running-intensity-mode');
+  const runningIntensityValueWrap = document.getElementById('phase-running-intensity-value-wrap');
+  const runningIntensityValue = document.getElementById('phase-running-intensity-value');
 
-  const exNameInput = document.getElementById('ex-name');
+  const swimStyleWrap = document.getElementById('phase-swim-style-wrap');
+  const swimStyle = document.getElementById('phase-swim-style');
+  const swimEquipmentWrap = document.getElementById('phase-swim-equipment-wrap');
+  const swimEquipment = document.getElementById('phase-swim-equipment');
+
+  const gymExerciseWrap = document.getElementById('phase-gym-exercise-wrap');
+  const gymExercise = document.getElementById('phase-gym-exercise');
+  const gymRepsWrap = document.getElementById('phase-gym-reps-wrap');
+  const gymReps = document.getElementById('phase-gym-reps');
+  const gymWeightWrap = document.getElementById('phase-gym-weight-wrap');
+  const gymWeight = document.getElementById('phase-gym-weight');
+
   const exOptions = document.getElementById('exercise-options');
-  const exZoneLabel = document.getElementById('ex-zone-label');
   const catalogDataNode = document.getElementById('exercise-catalog-data');
 
-  let exercises = [];
+  const phasesJsonInput = document.getElementById('phases-json');
+  const phaseList = document.getElementById('phase-list');
+  const addPhaseBtn = document.getElementById('add-phase');
+  const muscleRoot = document.getElementById('muscle-react-root');
+
+  let phases = [];
+
+  const phaseTypeBySport = {
+    running: ['riscaldamento', 'corsa', 'recupero', 'riposo', 'defaticamento'],
+    swimming: ['riscaldamento', 'nuoto', 'recupero', 'defaticamento'],
+    gym: ['riscaldamento', 'allenamento', 'defaticamento', 'recupero'],
+    course: [],
+  };
 
   const catalog = (() => {
     if (!catalogDataNode) return [];
     try {
       const parsed = JSON.parse(catalogDataNode.textContent || '[]');
-      if (!Array.isArray(parsed)) return [];
-      return parsed;
+      return Array.isArray(parsed) ? parsed : [];
     } catch (_) {
       return [];
     }
@@ -46,48 +64,65 @@
 
   const normalize = (value) => (value || '').trim().toLowerCase();
 
-  const catalogForCurrentSport = () => {
-    const sport = sportType?.value || 'gym';
-    return catalog.filter((item) => item.sport_type === sport);
+  const currentSport = () => sportType?.value || 'gym';
+
+  const catalogForSport = (sport) => catalog.filter((item) => item.sport_type === sport);
+
+  const findCatalogExercise = (name, sport) => {
+    const val = normalize(name);
+    if (!val) return null;
+    return catalogForSport(sport).find((item) => normalize(item.name) === val) || null;
   };
 
-  const findCatalogByName = (name) => {
-    const value = normalize(name);
-    if (!value) return null;
-    return catalogForCurrentSport().find((item) => normalize(item.name) === value) || null;
+  const emitMuscleZones = (previewZone = null) => {
+    if (!muscleRoot) return;
+    const zones = phases.map((ph) => ph.body_zone).filter(Boolean);
+    if (previewZone) zones.push(previewZone);
+    document.dispatchEvent(new CustomEvent('myfit:exercise-zones-changed', { detail: { zones } }));
   };
 
-  const renderCatalogAutocomplete = () => {
+  const fillPhaseTypeOptions = () => {
+    if (!phaseType || !sportType) return;
+    const sport = currentSport();
+    const options = phaseTypeBySport[sport] || [];
+    phaseType.innerHTML = '';
+    options.forEach((value) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+      phaseType.appendChild(opt);
+    });
+  };
+
+  const renderExerciseAutocomplete = () => {
     if (!exOptions) return;
     exOptions.innerHTML = '';
-    catalogForCurrentSport().forEach((item) => {
+    catalogForSport(currentSport()).forEach((item) => {
       const option = document.createElement('option');
       option.value = item.name;
       exOptions.appendChild(option);
     });
   };
 
-  const refreshZonePreview = () => {
-    if (!exZoneLabel || !exNameInput) return;
-    const match = findCatalogByName(exNameInput.value);
-    exZoneLabel.value = match ? match.body_zone : '--';
-    emitMuscleZones(match ? match.body_zone : null);
-  };
-
-  const showOrHideSportBlocks = () => {
+  const showSportSpecificInputs = () => {
     if (!sportType) return;
-    const sport = sportType.value;
+    const sport = currentSport();
     const isCourse = sport === 'course';
+    const isRunning = sport === 'running';
+    const isSwimming = sport === 'swimming';
+    const isGym = sport === 'gym';
 
     if (courseWrap) courseWrap.classList.toggle('hidden', !isCourse);
-    if (detailedBlock) detailedBlock.classList.toggle('hidden', isCourse);
+    if (phaseBlock) phaseBlock.classList.toggle('hidden', isCourse);
 
-    if (exObjectiveLabel) {
-      exObjectiveLabel.childNodes[0].nodeValue = `${objectiveBySport[sport] || 'Obiettivo'} `;
-    }
+    [runningIntensityModeWrap, runningIntensityValueWrap].forEach((el) => el?.classList.toggle('hidden', !isRunning));
+    [swimStyleWrap, swimEquipmentWrap].forEach((el) => el?.classList.toggle('hidden', !isSwimming));
+    [gymExerciseWrap, gymRepsWrap, gymWeightWrap].forEach((el) => el?.classList.toggle('hidden', !isGym));
 
-    renderCatalogAutocomplete();
-    refreshZonePreview();
+    fillPhaseTypeOptions();
+    renderExerciseAutocomplete();
+    if (!isGym && gymExercise) gymExercise.value = '';
+    emitMuscleZones();
   };
 
   const showOrHideRecurrence = () => {
@@ -95,86 +130,112 @@
     repeatWeeksWrap.classList.toggle('hidden', recurrenceType.value !== 'weekly');
   };
 
-  const emitMuscleZones = (previewZone = null) => {
-    if (!muscleRoot) return;
-    const zones = exercises.map((ex) => ex.body_zone);
-    if (previewZone && previewZone !== '--') {
-      zones.push(previewZone);
-    }
-    document.dispatchEvent(
-      new CustomEvent('myfit:exercise-zones-changed', {
-        detail: { zones },
-      }),
-    );
+  const phaseToLabel = (phase) => {
+    const chunks = [
+      `${phase.phase_type}`,
+      `${phase.duration_value} (${phase.duration_type})`,
+    ];
+    if (phase.intensity_value) chunks.push(`intensita ${phase.intensity_value}`);
+    if (phase.swim_style) chunks.push(`stile ${phase.swim_style}`);
+    if (phase.equipment) chunks.push(`attrezzatura ${phase.equipment}`);
+    if (phase.exercise_name) chunks.push(`esercizio ${phase.exercise_name}`);
+    if (phase.reps) chunks.push(`reps ${phase.reps}`);
+    if (phase.weight_kg) chunks.push(`kg ${phase.weight_kg}`);
+    if (phase.repeat_count && phase.repeat_count > 1) chunks.push(`x${phase.repeat_count}`);
+    return chunks.join(' - ');
   };
 
-  const renderExerciseList = () => {
-    if (!exerciseList || !exercisesJsonInput) return;
-    exercisesJsonInput.value = JSON.stringify(exercises);
-    exerciseList.innerHTML = '';
+  const renderPhaseList = () => {
+    if (!phaseList || !phasesJsonInput) return;
+    phasesJsonInput.value = JSON.stringify(phases);
+    phaseList.innerHTML = '';
 
-    exercises.forEach((ex, index) => {
+    phases.forEach((phase, idx) => {
       const li = document.createElement('li');
       li.className = 'exercise-item';
-      li.innerHTML = `<span><strong>${ex.name}</strong> - ${ex.mode} - ${ex.objective || '-'} (${ex.body_zone})</span>`;
+      li.innerHTML = `<span><strong>Fase ${idx + 1}</strong> - ${phaseToLabel(phase)}</span>`;
 
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'danger small-btn';
       btn.textContent = 'Rimuovi';
       btn.addEventListener('click', () => {
-        exercises.splice(index, 1);
-        renderExerciseList();
+        phases.splice(idx, 1);
+        renderPhaseList();
         emitMuscleZones();
       });
 
       li.appendChild(btn);
-      exerciseList.appendChild(li);
+      phaseList.appendChild(li);
     });
   };
 
-  const readExerciseFromForm = () => {
-    if (!exNameInput) return null;
-    const matched = findCatalogByName(exNameInput.value);
-    if (!matched) {
-      window.alert('Seleziona un esercizio valido dal catalogo suggerito.');
+  const clearPhaseInputs = () => {
+    if (phaseDurationValue) phaseDurationValue.value = '';
+    if (phaseRepeatCount) phaseRepeatCount.value = '1';
+    if (runningIntensityValue) runningIntensityValue.value = '';
+    if (gymExercise) gymExercise.value = '';
+    if (gymReps) gymReps.value = '';
+    if (gymWeight) gymWeight.value = '';
+  };
+
+  const readPhaseFromForm = () => {
+    if (!sportType || !phaseType || !phaseDurationValue || !phaseDurationType) return null;
+    const sport = currentSport();
+    const durationValue = (phaseDurationValue.value || '').trim();
+    if (!durationValue) {
+      window.alert('Inserisci la durata della fase.');
       return null;
     }
 
-    const mode = document.getElementById('ex-mode')?.value || 'single';
-    const sets = Number(document.getElementById('ex-sets')?.value || 0) || null;
-    const reps = Number(document.getElementById('ex-reps')?.value || 0) || null;
-    const durationMinutes = Number(document.getElementById('ex-duration')?.value || 0) || null;
-    const objective = document.getElementById('ex-objective')?.value?.trim() || null;
-
-    return {
-      exercise_catalog_id: matched.id,
-      name: matched.name,
-      mode,
-      sets,
-      reps,
-      duration_minutes: durationMinutes,
-      objective,
-      body_zone: matched.body_zone,
+    const phase = {
+      phase_type: phaseType.value,
+      duration_type: phaseDurationType.value,
+      duration_value: durationValue,
+      repeat_count: Number(phaseRepeatCount?.value || 1) || 1,
+      body_zone: sport === 'gym' ? null : 'full_body',
     };
-  };
 
-  const clearExerciseForm = () => {
-    ['ex-name', 'ex-sets', 'ex-reps', 'ex-duration', 'ex-objective'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    if (exZoneLabel) exZoneLabel.value = '--';
+    if (sport === 'running') {
+      phase.intensity_mode = runningIntensityMode?.value || 'pace';
+      phase.intensity_value = (runningIntensityValue?.value || '').trim() || null;
+    }
+
+    if (sport === 'swimming') {
+      phase.swim_style = swimStyle?.value || 'stile libero';
+      phase.equipment = swimEquipment?.value || 'nessuno';
+    }
+
+    if (sport === 'gym') {
+      const selected = findCatalogExercise(gymExercise?.value || '', 'gym');
+      if (!selected) {
+        window.alert('Seleziona un esercizio valido dal catalogo.');
+        return null;
+      }
+      phase.exercise_catalog_id = selected.id;
+      phase.exercise_name = selected.name;
+      phase.body_zone = selected.body_zone;
+      phase.reps = Number(gymReps?.value || 0) || null;
+      phase.weight_kg = Number(gymWeight?.value || 0) || null;
+    }
+
+    return phase;
   };
 
   if (sportType) {
-    sportType.addEventListener('change', showOrHideSportBlocks);
-    showOrHideSportBlocks();
+    sportType.addEventListener('change', showSportSpecificInputs);
+    showSportSpecificInputs();
   }
 
-  if (exNameInput) {
-    exNameInput.addEventListener('input', refreshZonePreview);
-    exNameInput.addEventListener('change', refreshZonePreview);
+  if (gymExercise) {
+    gymExercise.addEventListener('input', () => {
+      const selected = findCatalogExercise(gymExercise.value, 'gym');
+      emitMuscleZones(selected ? selected.body_zone : null);
+    });
+    gymExercise.addEventListener('change', () => {
+      const selected = findCatalogExercise(gymExercise.value, 'gym');
+      emitMuscleZones(selected ? selected.body_zone : null);
+    });
   }
 
   if (recurrenceType) {
@@ -182,14 +243,14 @@
     showOrHideRecurrence();
   }
 
-  if (addExerciseBtn) {
-    addExerciseBtn.addEventListener('click', () => {
-      const exercise = readExerciseFromForm();
-      if (!exercise) return;
-      exercises.push(exercise);
-      renderExerciseList();
+  if (addPhaseBtn) {
+    addPhaseBtn.addEventListener('click', () => {
+      const phase = readPhaseFromForm();
+      if (!phase) return;
+      phases.push(phase);
+      renderPhaseList();
       emitMuscleZones();
-      clearExerciseForm();
+      clearPhaseInputs();
     });
   }
 

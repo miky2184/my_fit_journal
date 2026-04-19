@@ -10,7 +10,7 @@
     <h2>Nuovo Allenamento</h2>
     <form method="post" action="/workouts" class="form-grid" id="workout-form">
       <label>Nome allenamento
-        <input type="text" name="name" required placeholder="Mercoledi Forza Gambe" />
+        <input type="text" name="name" required placeholder="Corsa intervallata mercoledi" />
       </label>
 
       <label>Sport
@@ -21,7 +21,7 @@
         </select>
       </label>
 
-      <label>Durata (min)
+      <label>Durata stimata (min)
         <input type="number" min="10" name="estimated_minutes" required value="45" />
       </label>
 
@@ -34,57 +34,75 @@
         </select>
       </label>
 
-      <div id="detailed-block" class="detail-workout">
-        <div class="grid two-col inner-grid">
-          <label>Riscaldamento (min)
-            <input type="number" min="0" name="warmup_minutes" placeholder="10" />
-          </label>
-          <label>Defaticamento (min)
-            <input type="number" min="0" name="cooldown_minutes" placeholder="8" />
-          </label>
-        </div>
-
-        <label>Note riscaldamento
-          <input type="text" name="warmup_notes" placeholder="Mobilita + attivazione" />
-        </label>
-
-        <label>Note defaticamento
-          <input type="text" name="cooldown_notes" placeholder="Stretching leggero" />
-        </label>
-
-        <h3>Esercizi</h3>
+      <div id="phase-block" class="detail-workout">
+        <h3>Nuova Fase</h3>
         <div class="exercise-builder">
-          <label>Esercizio (catalogo)
-            <input type="text" id="ex-name" list="exercise-options" placeholder="es. shoulder press" autocomplete="off" />
-            <small class="muted">Seleziona un esercizio esistente (autocomplete).</small>
+          <label>Tipo fase
+            <select id="phase-type"></select>
           </label>
-          <datalist id="exercise-options"></datalist>
-          <label>Modalita
-            <select id="ex-mode">
-              <option value="single">Singolo</option>
-              <option value="rep">In rep</option>
+
+          <label>Durata
+            <div class="inline-inputs">
+              <input type="number" min="1" id="phase-duration-value" placeholder="10" />
+              <select id="phase-duration-type">
+                <option value="time">Tempo (min)</option>
+                <option value="distance">Distanza (m/km)</option>
+              </select>
+            </div>
+          </label>
+
+          <label>Ripetizioni fase
+            <input type="number" min="1" id="phase-repeat-count" value="1" />
+          </label>
+
+          <label id="phase-running-intensity-mode-wrap" class="running-only">Intensita
+            <select id="phase-running-intensity-mode">
+              <option value="pace">Passo</option>
+              <option value="hr_zone">Zona FC</option>
             </select>
           </label>
-          <label>Set
-            <input type="number" min="1" id="ex-sets" placeholder="4" />
+
+          <label id="phase-running-intensity-value-wrap" class="running-only">Valore intensita
+            <input type="text" id="phase-running-intensity-value" placeholder="4:45/km o Z3" />
           </label>
-          <label>Reps
-            <input type="number" min="1" id="ex-reps" placeholder="8" />
+
+          <label id="phase-swim-style-wrap" class="swimming-only">Stile
+            <select id="phase-swim-style">
+              <option value="stile libero">Stile libero</option>
+              <option value="rana">Rana</option>
+              <option value="dorso">Dorso</option>
+              <option value="farfalla">Farfalla</option>
+            </select>
           </label>
-          <label>Durata (min)
-            <input type="number" min="1" id="ex-duration" placeholder="10" />
+
+          <label id="phase-swim-equipment-wrap" class="swimming-only">Attrezzatura
+            <select id="phase-swim-equipment">
+              <option value="nessuno">Nessuno</option>
+              <option value="pull buoy">Pull buoy</option>
+              <option value="tavoletta">Tavoletta</option>
+              <option value="palette mani">Palette mani</option>
+            </select>
           </label>
-          <label id="ex-objective-label">Kg target
-            <input type="text" id="ex-objective" placeholder="60" />
+
+          <label id="phase-gym-exercise-wrap" class="gym-only">Esercizio (catalogo)
+            <input type="text" id="phase-gym-exercise" list="exercise-options" placeholder="es. shoulder press" autocomplete="off" />
+            <small class="muted">Autocomplete su esercizi salvati.</small>
           </label>
-          <label>Zona corpo (automatica)
-            <input type="text" id="ex-zone-label" value="--" readonly />
+          <datalist id="exercise-options"></datalist>
+
+          <label id="phase-gym-reps-wrap" class="gym-only">Ripetizioni esercizio
+            <input type="number" min="1" id="phase-gym-reps" placeholder="12" />
           </label>
-          <button type="button" id="add-exercise" class="secondary">Aggiungi esercizio</button>
+
+          <label id="phase-gym-weight-wrap" class="gym-only">Peso (kg)
+            <input type="number" min="0" step="0.5" id="phase-gym-weight" placeholder="40" />
+          </label>
+
+          <button type="button" id="add-phase" class="secondary">Aggiungi fase</button>
         </div>
 
-        <input type="hidden" name="exercises_json" id="exercises-json" value="[]" />
-        <ul id="exercise-list" class="exercise-list"></ul>
+        <input type="hidden" name="phases_json" id="phases-json" value="[]" />
+        <ul id="phase-list" class="exercise-list"></ul>
       </div>
 
       <button type="submit">Salva allenamento</button>
@@ -93,12 +111,8 @@
 
   <article class="card">
     <h2>Mappa Muscolare</h2>
-    <p class="muted">Sagoma {{ 'femminile' if current_user and current_user.sex == 'female' else 'maschile' }}. Le zone si colorano in base agli esercizi selezionati.</p>
-    <div
-      class="body-map-react"
-      id="muscle-react-root"
-      data-sex="{{ 'female' if current_user and current_user.sex == 'female' else 'male' }}"
-    >
+    <p class="muted">La colorazione avviene automaticamente dagli esercizi selezionati.</p>
+    <div class="body-map-react" id="muscle-react-root" data-sex="{{ 'female' if current_user and current_user.sex == 'female' else 'male' }}">
       <p class="muted">Caricamento mappa muscolare...</p>
     </div>
     <script type="importmap">
@@ -175,10 +189,10 @@
             <span class="badge {{ 'ok' if w.active else 'off' }}">{{ 'Attivo' if w.active else 'Disattivo' }}</span>
           </div>
           <p class="muted">{{ w.category }} • {{ w.estimated_minutes }} min{% if w.course_name %} • {{ w.course_name|title }}{% endif %}</p>
-          {% if d.exercises %}
+          {% if d.phases %}
             <ul class="mini-ex-list">
-              {% for ex in d.exercises %}
-                <li>{{ ex.name }} - {{ ex.objective or '-' }} ({{ ex.body_zone }})</li>
+              {% for ph in d.phases %}
+                <li>{{ ph.phase_type }} - {{ ph.duration_value }} ({{ ph.duration_type }}){% if ph.exercise_name %} - {{ ph.exercise_name }}{% endif %}</li>
               {% endfor %}
             </ul>
           {% else %}

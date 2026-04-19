@@ -5,7 +5,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.auth import hash_password, verify_password
-from app.constants import OBJECTIVE_LABEL_BY_SPORT, SPORT_COURSE
+from app.constants import SPORT_COURSE
 from app.models import ExerciseCatalog, User, Workout, WorkoutSchedule, WorkoutSession
 
 
@@ -72,29 +72,89 @@ def _normalize_target_area(exercises: list[dict]) -> str:
     return ", ".join(zones[:3])
 
 
-def _build_exercise_block(sport_type: str, warmup: dict, cooldown: dict, exercises: list[dict]) -> str:
+def _build_phase_summary(sport_type: str, phases: list[dict]) -> str:
     if sport_type == SPORT_COURSE:
         return "Lezione guidata con istruttore."
 
     lines = []
-    if warmup.get("notes") or warmup.get("minutes"):
-        lines.append(f"Riscaldamento: {warmup.get('minutes') or '-'} min - {warmup.get('notes') or ''}".strip())
+    for idx, phase in enumerate(phases, start=1):
+        phase_type = phase.get("phase_type") or "fase"
+        duration_type = phase.get("duration_type") or "time"
+        duration_value = phase.get("duration_value") or "-"
+        repeats = phase.get("repeat_count") or 1
+        exercise_name = phase.get("exercise_name")
+        intensity = phase.get("intensity_value")
+        style = phase.get("swim_style")
+        equipment = phase.get("equipment")
+        reps = phase.get("reps")
+        weight = phase.get("weight_kg")
 
-    objective_label = OBJECTIVE_LABEL_BY_SPORT.get(sport_type, "Obiettivo")
-    for idx, ex in enumerate(exercises, start=1):
-        mode = ex.get("mode") or "single"
-        sets = ex.get("sets") or "-"
-        reps = ex.get("reps") or "-"
-        duration = ex.get("duration_minutes") or "-"
-        objective = ex.get("objective") or "-"
-        lines.append(
-            f"{idx}. {ex.get('name', 'Esercizio')} [{mode}] sets:{sets} reps:{reps} min:{duration} {objective_label}:{objective}"
-        )
+        details = [f"durata {duration_value} ({duration_type})"]
+        if exercise_name:
+            details.append(f"esercizio {exercise_name}")
+        if intensity:
+            details.append(f"intensita {intensity}")
+        if style:
+            details.append(f"stile {style}")
+        if equipment:
+            details.append(f"attrezzatura {equipment}")
+        if reps:
+            details.append(f"reps {reps}")
+        if weight:
+            details.append(f"kg {weight}")
+        if repeats and repeats > 1:
+            details.append(f"x{repeats}")
 
-    if cooldown.get("notes") or cooldown.get("minutes"):
-        lines.append(f"Defaticamento: {cooldown.get('minutes') or '-'} min - {cooldown.get('notes') or ''}".strip())
+        lines.append(f"{idx}. {phase_type}: " + " - ".join(details))
 
-    return "\n".join(lines) if lines else "Allenamento personalizzato"
+    return "\n".join(lines) if lines else "Allenamento a fasi"
+
+
+def _normalize_phases(session: Session, sport_type: str, phases: list[dict]) -> list[dict]:
+    cleaned = []
+    for phase in phases:
+        phase_type = (phase.get("phase_type") or "").strip().lower()
+        duration_type = (phase.get("duration_type") or "time").strip().lower()
+        duration_value = phase.get("duration_value")
+        repeat_count = phase.get("repeat_count") or 1
+        if not phase_type or not duration_value:
+            continue
+
+        item = {
+            "phase_type": phase_type,
+            "duration_type": duration_type if duration_type in {"time", "distance"} else "time",
+            "duration_value": str(duration_value).strip(),
+            "repeat_count": max(1, int(repeat_count)),
+        }
+
+        if sport_type == "running":
+            item["intensity_mode"] = (phase.get("intensity_mode") or "pace").strip().lower()
+            item["intensity_value"] = (phase.get("intensity_value") or "").strip() or None
+            item["body_zone"] = "full_body"
+
+        if sport_type == "swimming":
+            item["swim_style"] = (phase.get("swim_style") or "stile libero").strip().lower()
+            item["equipment"] = (phase.get("equipment") or "nessuno").strip().lower()
+            item["body_zone"] = "full_body"
+
+        if sport_type == "gym":
+            catalog_id = phase.get("exercise_catalog_id")
+            if not catalog_id:
+                continue
+            try:
+                catalog = session.get(ExerciseCatalog, int(catalog_id))
+            except (TypeError, ValueError):
+                continue
+            if not catalog or not catalog.active or catalog.sport_type != "gym":
+                continue
+            item["exercise_catalog_id"] = catalog.id
+            item["exercise_name"] = catalog.name
+            item["body_zone"] = catalog.body_zone
+            item["reps"] = int(phase.get("reps") or 0) or None
+            item["weight_kg"] = float(phase.get("weight_kg") or 0) or None
+
+        cleaned.append(item)
+    return cleaned
 
 
 def create_workout(
@@ -104,9 +164,7 @@ def create_workout(
     sport_type: str,
     estimated_minutes: int,
     course_name: str | None,
-    warmup: dict,
-    cooldown: dict,
-    exercises: list[dict],
+    phases: list[dict],
 ) -> Workout:
     normalized_sport = sport_type if sport_type in {"swimming", "gym", "running", "course"} else "gym"
     normalized_course = (course_name or "").strip() if normalized_sport == SPORT_COURSE else None
@@ -120,42 +178,16 @@ def create_workout(
         "course": "Corsi",
     }
 
-    if normalized_sport != SPORT_COURSE:
-        normalized_exercises = []
-        for ex in exercises:
-            catalog_id = ex.get("exercise_catalog_id")
-            if not catalog_id:
-                continue
-            catalog = session.get(ExerciseCatalog, int(catalog_id))
-            if not catalog or not catalog.active or catalog.sport_type != normalized_sport:
-                continue
-            normalized_exercises.append(
-                {
-                    "exercise_catalog_id": catalog.id,
-                    "name": catalog.name,
-                    "mode": ex.get("mode") or "single",
-                    "sets": ex.get("sets"),
-                    "reps": ex.get("reps"),
-                    "duration_minutes": ex.get("duration_minutes"),
-                    "objective": ex.get("objective"),
-                    "body_zone": catalog.body_zone,
-                }
-            )
-        exercises = normalized_exercises
-
-    details = {
-        "warmup": warmup,
-        "cooldown": cooldown,
-        "exercises": exercises,
-    }
+    normalized_phases = _normalize_phases(session, normalized_sport, phases)
+    details = {"phases": normalized_phases}
 
     workout = Workout(
         user_id=user_id,
         name=name.strip(),
         category=category_map.get(normalized_sport, "Workout"),
-        target_area=_normalize_target_area(exercises),
+        target_area=_normalize_target_area(normalized_phases),
         estimated_minutes=max(1, estimated_minutes),
-        exercise_block=_build_exercise_block(normalized_sport, warmup, cooldown, exercises),
+        exercise_block=_build_phase_summary(normalized_sport, normalized_phases),
         sport_type=normalized_sport,
         course_name=normalized_course,
         detail_json=json.dumps(details, ensure_ascii=True),

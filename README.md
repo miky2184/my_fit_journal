@@ -8,7 +8,7 @@ Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
 - Vista mobile `/today` per visualizzare la scheda del giorno e registrare sessioni.
 - Vista desktop `/workouts` per:
   - creare template allenamento riutilizzabili,
-  - definire dettagli sport-specifici (nuoto, sala pesi, corsa),
+  - definire dettagli sport-specifici a fasi (nuoto, sala pesi, corsa),
   - scegliere esercizi da catalogo DB con autocomplete (zona muscolare automatica),
   - gestire corsi con sola durata,
   - associare allenamenti al calendario con ricorrenza settimanale.

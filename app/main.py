@@ -89,7 +89,7 @@ def render(request: Request, template: str, context: dict):
     return templates.TemplateResponse(template, payload)
 
 
-def _parse_exercises_json(raw: str | None) -> list[dict]:
+def _parse_phases_json(raw: str | None) -> list[dict]:
     if not raw:
         return []
     try:
@@ -104,18 +104,19 @@ def _parse_exercises_json(raw: str | None) -> list[dict]:
     for item in payload:
         if not isinstance(item, dict):
             continue
-        name = str(item.get("name", "")).strip()
-        if not name:
-            continue
         cleaned.append(
             {
                 "exercise_catalog_id": int(item.get("exercise_catalog_id") or 0) or None,
-                "name": name,
-                "mode": str(item.get("mode", "single")),
-                "sets": int(item.get("sets") or 0) or None,
+                "phase_type": str(item.get("phase_type", "")).strip().lower(),
+                "duration_type": str(item.get("duration_type", "time")).strip().lower(),
+                "duration_value": str(item.get("duration_value", "")).strip(),
+                "repeat_count": int(item.get("repeat_count") or 1),
                 "reps": int(item.get("reps") or 0) or None,
-                "duration_minutes": int(item.get("duration_minutes") or 0) or None,
-                "objective": str(item.get("objective", "")).strip() or None,
+                "weight_kg": float(item.get("weight_kg") or 0) or None,
+                "intensity_mode": str(item.get("intensity_mode", "")).strip().lower() or None,
+                "intensity_value": str(item.get("intensity_value", "")).strip() or None,
+                "swim_style": str(item.get("swim_style", "")).strip().lower() or None,
+                "equipment": str(item.get("equipment", "")).strip().lower() or None,
                 "body_zone": str(item.get("body_zone", "full_body")).strip() or "full_body",
             }
         )
@@ -349,19 +350,13 @@ def create_workout_action(
     sport_type: str = Form(...),
     estimated_minutes: int = Form(...),
     course_name: str | None = Form(default=None),
-    warmup_minutes: int | None = Form(default=None),
-    warmup_notes: str | None = Form(default=None),
-    cooldown_minutes: int | None = Form(default=None),
-    cooldown_notes: str | None = Form(default=None),
-    exercises_json: str | None = Form(default=None),
+    phases_json: str | None = Form(default=None),
 ):
     user_id = require_user_id(request)
     if not user_id:
         return RedirectResponse(url="/login", status_code=302)
 
-    warmup = {"minutes": warmup_minutes, "notes": (warmup_notes or "").strip() or None}
-    cooldown = {"minutes": cooldown_minutes, "notes": (cooldown_notes or "").strip() or None}
-    exercises = _parse_exercises_json(exercises_json)
+    phases = _parse_phases_json(phases_json)
 
     with get_session() as session:
         create_workout(
@@ -371,9 +366,7 @@ def create_workout_action(
             sport_type=sport_type,
             estimated_minutes=estimated_minutes,
             course_name=course_name,
-            warmup=warmup,
-            cooldown=cooldown,
-            exercises=exercises,
+            phases=phases,
         )
     return RedirectResponse(url="/workouts", status_code=303)
 
