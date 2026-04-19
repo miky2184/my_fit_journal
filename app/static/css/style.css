@@ -264,6 +264,29 @@ button.danger {
   max-width: 175px;
 }
 
+.body-map-react {
+  min-height: 360px;
+}
+
+.body-map-react-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.body-card {
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  padding: 0.5rem;
+  background: #f6f9f8;
+}
+
+.body-card h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .session-list,
 .workout-list {
   list-style: none;

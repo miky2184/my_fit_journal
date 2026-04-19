@@ -96,32 +96,14 @@
   <article class="card">
     <h2>Mappa Muscolare</h2>
     <p class="muted">Sagoma {{ 'femminile' if current_user and current_user.sex == 'female' else 'maschile' }}. Le zone si colorano in base agli esercizi selezionati.</p>
-    <div class="body-map {{ 'female' if current_user and current_user.sex == 'female' else 'male' }}" id="body-map">
-      <svg viewBox="0 0 160 260" aria-label="Corpo fronte">
-        <title>Fronte</title>
-        <circle cx="80" cy="28" r="18" class="zone full_body" />
-        <rect x="60" y="48" width="40" height="46" rx="14" class="zone chest core full_body" />
-        <rect x="42" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
-        <rect x="102" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
-        <rect x="64" y="94" width="32" height="22" rx="8" class="zone core full_body" />
-        <rect x="58" y="116" width="20" height="54" rx="8" class="zone quads full_body" />
-        <rect x="82" y="116" width="20" height="54" rx="8" class="zone quads full_body" />
-        <rect x="58" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
-        <rect x="84" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
-      </svg>
-      <svg viewBox="0 0 160 260" aria-label="Corpo retro">
-        <title>Retro</title>
-        <circle cx="80" cy="28" r="18" class="zone full_body" />
-        <rect x="60" y="48" width="40" height="48" rx="14" class="zone back full_body" />
-        <rect x="42" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
-        <rect x="102" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
-        <rect x="64" y="96" width="32" height="24" rx="8" class="zone glutes core full_body" />
-        <rect x="58" y="120" width="20" height="50" rx="8" class="zone hamstrings glutes full_body" />
-        <rect x="82" y="120" width="20" height="50" rx="8" class="zone hamstrings glutes full_body" />
-        <rect x="58" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
-        <rect x="84" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
-      </svg>
+    <div
+      class="body-map-react"
+      id="muscle-react-root"
+      data-sex="{{ 'female' if current_user and current_user.sex == 'female' else 'male' }}"
+    >
+      <p class="muted">Caricamento mappa muscolare...</p>
     </div>
+    <script type="module" src="/static/js/muscle_highlighter.js"></script>
   </article>
 </section>
 

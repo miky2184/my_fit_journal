@@ -24,7 +24,7 @@
   const exercisesJsonInput = document.getElementById('exercises-json');
   const exerciseList = document.getElementById('exercise-list');
   const addExerciseBtn = document.getElementById('add-exercise');
-  const bodyMap = document.getElementById('body-map');
+  const muscleRoot = document.getElementById('muscle-react-root');
 
   let exercises = [];
 
@@ -46,22 +46,14 @@
     repeatWeeksWrap.classList.toggle('hidden', recurrenceType.value !== 'weekly');
   };
 
-  const renderBodyMap = () => {
-    if (!bodyMap) return;
-    const zones = new Set(exercises.map((ex) => ex.body_zone));
-    bodyMap.querySelectorAll('.zone').forEach((el) => {
-      el.classList.remove('active');
-      if (zones.has('full_body')) {
-        el.classList.add('active');
-        return;
-      }
-
-      const classList = Array.from(el.classList);
-      const match = classList.some((cls) => zones.has(cls));
-      if (match) {
-        el.classList.add('active');
-      }
-    });
+  const emitMuscleZones = () => {
+    if (!muscleRoot) return;
+    const zones = exercises.map((ex) => ex.body_zone);
+    document.dispatchEvent(
+      new CustomEvent('myfit:exercise-zones-changed', {
+        detail: { zones },
+      }),
+    );
   };
 
   const renderExerciseList = () => {
@@ -81,7 +73,7 @@
       btn.addEventListener('click', () => {
         exercises.splice(index, 1);
         renderExerciseList();
-        renderBodyMap();
+        emitMuscleZones();
       });
 
       li.appendChild(btn);
@@ -134,7 +126,7 @@
       if (!exercise) return;
       exercises.push(exercise);
       renderExerciseList();
-      renderBodyMap();
+      emitMuscleZones();
       clearExerciseForm();
     });
   }
@@ -151,4 +143,6 @@
     todayWorkout.addEventListener('change', syncTodaySchedule);
     syncTodaySchedule();
   }
+
+  emitMuscleZones();
 })();
