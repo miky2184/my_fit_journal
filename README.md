@@ -5,8 +5,13 @@ Applicazione fitness con backend Python (`FastAPI`) e PostgreSQL.
 ## Funzionalita MVP
 - Registrazione e login utente con sessione autenticata.
 - Ogni utente vede solo i propri allenamenti, sessioni e statistiche.
-- Vista mobile `/today` per registrare e consultare sessioni quotidiane.
-- Vista desktop `/workouts` per definire libreria allenamenti.
+- Vista mobile `/today` per visualizzare la scheda del giorno e registrare sessioni.
+- Vista desktop `/workouts` per:
+  - creare template allenamento riutilizzabili,
+  - definire dettagli sport-specifici (nuoto, sala pesi, corsa),
+  - gestire corsi con sola durata,
+  - associare allenamenti al calendario con ricorrenza settimanale.
+- Mappa corpo fronte/retro con evidenza aree coinvolte dagli esercizi.
 - Dashboard `/dashboard` con indicatori settimanali e trend ultimi 7 giorni.
 - Schema PostgreSQL dedicato: `myfit`.
 
@@ -68,3 +73,4 @@ Nel file `.env` sono previsti questi valori:
 Allo startup l'app crea lo schema `myfit` (se non esiste) e le tabelle necessarie.
 Se esistono tabelle legacy senza ownership utente, l'app aggiunge i campi `user_id`
 automaticamente e assegna i dati storici a un utente tecnico `legacy@myfit.local`.
+Le pianificazioni ricorrenti sono salvate in `workout_schedules`.

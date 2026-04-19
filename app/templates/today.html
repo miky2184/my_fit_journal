@@ -1,22 +1,45 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="page-header">
-  <h1>Allenamenti del {{ today.strftime('%d/%m/%Y') }}</h1>
-  <p>Vista mobile-first: registra velocemente la tua sessione quotidiana.</p>
+  <h1>Scheda di Oggi - {{ today.strftime('%d/%m/%Y') }}</h1>
+  <p>Da mobile vedi gli allenamenti pianificati oggi e registri subito la sessione.</p>
 </section>
 
 <section class="grid two-col">
   <article class="card">
-    <h2>Nuova Sessione</h2>
+    <h2>Allenamenti Pianificati Oggi</h2>
+    {% if planned_today %}
+      <ul class="session-list">
+      {% for item in planned_today %}
+        <li>
+          <strong>{{ item.workout.name }}</strong>
+          <div class="muted">{{ item.workout.category }} • {{ item.workout.estimated_minutes }} min</div>
+          {% if item.schedule.recurrence_type == 'weekly' %}
+            <small class="muted">Ricorrenza settimanale attiva ({{ item.schedule.repeat_weeks }} settimane)</small>
+          {% else %}
+            <small class="muted">Sessione singola a calendario</small>
+          {% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nessuna pianificazione per oggi. Puoi comunque registrare una sessione manuale.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h2>Registra Sessione</h2>
     {% if workouts %}
     <form method="post" action="/sessions" class="form-grid">
       <label>Allenamento
-        <select name="workout_id" required>
+        <select name="workout_id" id="today-workout" required>
           {% for workout in workouts %}
-            <option value="{{ workout.id }}">{{ workout.name }} ({{ workout.category }})</option>
+            <option value="{{ workout.id }}" data-schedule-id="{{ planned_lookup.get(workout.id, '') }}">{{ workout.name }} ({{ workout.category }})</option>
           {% endfor %}
         </select>
       </label>
+
+      <input type="hidden" name="schedule_id" id="today-schedule-id" value="" />
 
       <label>Data
         <input type="date" name="session_date" value="{{ today.isoformat() }}" required />
@@ -46,27 +69,27 @@
       <a href="/workouts" class="inline-link-btn">Vai ad Allenamenti</a>
     {% endif %}
   </article>
+</section>
 
-  <article class="card">
-    <h2>Sessioni di Oggi</h2>
-    {% if sessions %}
-      <ul class="session-list">
-      {% for s in sessions %}
-        <li>
-          <div>
-            <strong>{{ s.workout.name }}</strong>
-            <small>{{ s.created_at.strftime('%H:%M') }}</small>
-          </div>
-          <div class="muted">
-            {{ s.duration_minutes or '-' }} min • {{ s.calories_burned or '-' }} kcal
-          </div>
-          {% if s.notes %}<p>{{ s.notes }}</p>{% endif %}
-        </li>
-      {% endfor %}
-      </ul>
-    {% else %}
-      <p class="muted">Nessuna sessione registrata oggi.</p>
-    {% endif %}
-  </article>
+<section class="card">
+  <h2>Sessioni registrate oggi</h2>
+  {% if sessions %}
+    <ul class="session-list">
+    {% for s in sessions %}
+      <li>
+        <div>
+          <strong>{{ s.workout.name }}</strong>
+          <small>{{ s.created_at.strftime('%H:%M') }}</small>
+        </div>
+        <div class="muted">
+          {{ s.duration_minutes or '-' }} min • {{ s.calories_burned or '-' }} kcal
+        </div>
+        {% if s.notes %}<p>{{ s.notes }}</p>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Nessuna sessione registrata oggi.</p>
+  {% endif %}
 </section>
 {% endblock %}

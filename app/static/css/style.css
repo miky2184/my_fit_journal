@@ -89,6 +89,14 @@ body {
   gap: 1rem;
 }
 
+.grid.two-col.inner-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.hidden {
+  display: none;
+}
+
 .auth-wrap {
   max-width: 520px;
   margin: 1.2rem auto;
@@ -185,6 +193,75 @@ button.danger {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.detail-workout {
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  padding: 0.8rem;
+  background: #f9fcfb;
+}
+
+.exercise-builder {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.exercise-list,
+.mini-ex-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: #fff;
+}
+
+.mini-ex-list li {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.body-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.body-map svg {
+  width: 100%;
+  max-width: 190px;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: #f6f9f8;
+  padding: 0.4rem;
+}
+
+.zone {
+  fill: #d7dfdc;
+  stroke: #8da39c;
+  stroke-width: 1.2;
+  transition: fill 0.25s ease;
+}
+
+.zone.active {
+  fill: #ff8e5b;
+}
+
+.body-map.female svg {
+  max-width: 175px;
 }
 
 .session-list,
@@ -285,6 +362,10 @@ pre {
 
 @media (min-width: 880px) {
   .grid.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .exercise-builder {
     grid-template-columns: 1fr 1fr;
   }
 

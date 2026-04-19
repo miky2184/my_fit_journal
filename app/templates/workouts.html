@@ -1,45 +1,199 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="page-header desktop-note">
-  <h1>Definizione Allenamenti</h1>
-  <p>Questa sezione è pensata per desktop: crea e gestisci la tua libreria workout.</p>
+  <h1>Allenamenti e Pianificazione</h1>
+  <p>Crea template riutilizzabili e assegnali a calendario con ricorrenza.</p>
 </section>
 
 <section class="grid two-col">
   <article class="card">
     <h2>Nuovo Allenamento</h2>
-    <form method="post" action="/workouts" class="form-grid">
-      <label>Nome
-        <input type="text" name="name" required placeholder="Upper Body Strength" />
+    <form method="post" action="/workouts" class="form-grid" id="workout-form">
+      <label>Nome allenamento
+        <input type="text" name="name" required placeholder="Mercoledi Forza Gambe" />
       </label>
-      <label>Categoria
-        <input type="text" name="category" required placeholder="Forza" />
+
+      <label>Sport
+        <select name="sport_type" id="sport-type" required>
+          {% for code, label in sport_options %}
+            <option value="{{ code }}">{{ label }}</option>
+          {% endfor %}
+        </select>
       </label>
-      <label>Area Target
-        <input type="text" name="target_area" required placeholder="Petto, Spalle, Tricipiti" />
+
+      <label>Durata (min)
+        <input type="number" min="10" name="estimated_minutes" required value="45" />
       </label>
-      <label>Durata Stimata (min)
-        <input type="number" min="1" name="estimated_minutes" required value="45" />
+
+      <label id="course-wrap" class="hidden">Corso
+        <select name="course_name" id="course-name">
+          <option value="">Seleziona corso</option>
+          {% for course in course_options %}
+            <option value="{{ course }}">{{ course|title }}</option>
+          {% endfor %}
+        </select>
       </label>
-      <label>Dettaglio Esercizi
-        <textarea name="exercise_block" rows="8" required placeholder="- Panca piana 4x8\n- Military press 4x10\n- Dip 3x12"></textarea>
-      </label>
-      <button type="submit">Salva Allenamento</button>
+
+      <div id="detailed-block" class="detail-workout">
+        <div class="grid two-col inner-grid">
+          <label>Riscaldamento (min)
+            <input type="number" min="0" name="warmup_minutes" placeholder="10" />
+          </label>
+          <label>Defaticamento (min)
+            <input type="number" min="0" name="cooldown_minutes" placeholder="8" />
+          </label>
+        </div>
+
+        <label>Note riscaldamento
+          <input type="text" name="warmup_notes" placeholder="Mobilita + attivazione" />
+        </label>
+
+        <label>Note defaticamento
+          <input type="text" name="cooldown_notes" placeholder="Stretching leggero" />
+        </label>
+
+        <h3>Esercizi</h3>
+        <div class="exercise-builder">
+          <label>Nome esercizio
+            <input type="text" id="ex-name" placeholder="Squat bilanciere" />
+          </label>
+          <label>Modalita
+            <select id="ex-mode">
+              <option value="single">Singolo</option>
+              <option value="rep">In rep</option>
+            </select>
+          </label>
+          <label>Set
+            <input type="number" min="1" id="ex-sets" placeholder="4" />
+          </label>
+          <label>Reps
+            <input type="number" min="1" id="ex-reps" placeholder="8" />
+          </label>
+          <label>Durata (min)
+            <input type="number" min="1" id="ex-duration" placeholder="10" />
+          </label>
+          <label id="ex-objective-label">Kg target
+            <input type="text" id="ex-objective" placeholder="60" />
+          </label>
+          <label>Zona corpo
+            <select id="ex-zone">
+              {% for value, label in body_zones %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <button type="button" id="add-exercise" class="secondary">Aggiungi esercizio</button>
+        </div>
+
+        <input type="hidden" name="exercises_json" id="exercises-json" value="[]" />
+        <ul id="exercise-list" class="exercise-list"></ul>
+      </div>
+
+      <button type="submit">Salva allenamento</button>
     </form>
   </article>
 
   <article class="card">
-    <h2>Libreria Workout</h2>
+    <h2>Mappa Muscolare</h2>
+    <p class="muted">Sagoma {{ 'femminile' if current_user and current_user.sex == 'female' else 'maschile' }}. Le zone si colorano in base agli esercizi selezionati.</p>
+    <div class="body-map {{ 'female' if current_user and current_user.sex == 'female' else 'male' }}" id="body-map">
+      <svg viewBox="0 0 160 260" aria-label="Corpo fronte">
+        <title>Fronte</title>
+        <circle cx="80" cy="28" r="18" class="zone full_body" />
+        <rect x="60" y="48" width="40" height="46" rx="14" class="zone chest core full_body" />
+        <rect x="42" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
+        <rect x="102" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
+        <rect x="64" y="94" width="32" height="22" rx="8" class="zone core full_body" />
+        <rect x="58" y="116" width="20" height="54" rx="8" class="zone quads full_body" />
+        <rect x="82" y="116" width="20" height="54" rx="8" class="zone quads full_body" />
+        <rect x="58" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
+        <rect x="84" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
+      </svg>
+      <svg viewBox="0 0 160 260" aria-label="Corpo retro">
+        <title>Retro</title>
+        <circle cx="80" cy="28" r="18" class="zone full_body" />
+        <rect x="60" y="48" width="40" height="48" rx="14" class="zone back full_body" />
+        <rect x="42" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
+        <rect x="102" y="52" width="16" height="58" rx="7" class="zone shoulders arms full_body" />
+        <rect x="64" y="96" width="32" height="24" rx="8" class="zone glutes core full_body" />
+        <rect x="58" y="120" width="20" height="50" rx="8" class="zone hamstrings glutes full_body" />
+        <rect x="82" y="120" width="20" height="50" rx="8" class="zone hamstrings glutes full_body" />
+        <rect x="58" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
+        <rect x="84" y="170" width="18" height="56" rx="7" class="zone calves full_body" />
+      </svg>
+    </div>
+  </article>
+</section>
+
+<section class="grid two-col">
+  <article class="card">
+    <h2>Pianifica su Calendario</h2>
+    <form method="post" action="/schedules" class="form-grid">
+      <label>Allenamento
+        <select name="workout_id" required>
+          {% for item in workouts %}
+            {% if item.workout.active %}
+              <option value="{{ item.workout.id }}">{{ item.workout.name }} ({{ item.workout.category }})</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </label>
+      <label>Data di partenza
+        <input type="date" name="start_date" required />
+      </label>
+      <label>Tipo pianificazione
+        <select name="recurrence_type" id="recurrence-type">
+          <option value="once">Singola data</option>
+          <option value="weekly">Settimanale</option>
+        </select>
+      </label>
+      <label id="repeat-weeks-wrap" class="hidden">Numero settimane
+        <input type="number" min="1" max="12" name="repeat_weeks" value="4" />
+      </label>
+      <button type="submit">Salva pianificazione</button>
+    </form>
+
+    {% if schedules %}
+      <h3>Pianificazioni salvate</h3>
+      <ul class="session-list">
+        {% for sched in schedules %}
+          <li>
+            <strong>{{ sched.workout.name }}</strong>
+            <div class="muted">
+              {% if sched.recurrence_type == 'weekly' %}
+                ogni {{ ['lun','mar','mer','gio','ven','sab','dom'][sched.weekday or 0] }} per {{ sched.repeat_weeks }} settimane (da {{ sched.start_date.strftime('%d/%m/%Y') }})
+              {% else %}
+                una tantum il {{ sched.start_date.strftime('%d/%m/%Y') }}
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h2>Libreria Allenamenti</h2>
     {% if workouts %}
       <ul class="workout-list">
-      {% for w in workouts %}
+      {% for item in workouts %}
+        {% set w = item.workout %}
+        {% set d = item.details %}
         <li>
           <div class="workout-head">
             <strong>{{ w.name }}</strong>
             <span class="badge {{ 'ok' if w.active else 'off' }}">{{ 'Attivo' if w.active else 'Disattivo' }}</span>
           </div>
-          <p class="muted">{{ w.category }} • {{ w.target_area }} • {{ w.estimated_minutes }} min</p>
-          <pre>{{ w.exercise_block }}</pre>
+          <p class="muted">{{ w.category }} • {{ w.estimated_minutes }} min{% if w.course_name %} • {{ w.course_name|title }}{% endif %}</p>
+          {% if d.exercises %}
+            <ul class="mini-ex-list">
+              {% for ex in d.exercises %}
+                <li>{{ ex.name }} - {{ ex.objective or '-' }} ({{ ex.body_zone }})</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">Lezione guidata, dettagli definiti dall'istruttore.</p>
+          {% endif %}
           <div class="actions">
             <form method="post" action="/workouts/{{ w.id }}/toggle">
               <button type="submit" class="secondary">{{ 'Disattiva' if w.active else 'Attiva' }}</button>

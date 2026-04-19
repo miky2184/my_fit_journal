@@ -99,8 +99,8 @@ def _ensure_legacy_user(conn) -> int:
     inserted = conn.scalar(
         text(
             f"""
-            INSERT INTO {schema}.users (full_name, email, password_hash, created_at)
-            VALUES (:full_name, :email, :password_hash, NOW())
+            INSERT INTO {schema}.users (full_name, email, password_hash, sex, created_at)
+            VALUES (:full_name, :email, :password_hash, :sex, NOW())
             RETURNING id
             """
         ),
@@ -109,6 +109,7 @@ def _ensure_legacy_user(conn) -> int:
             "email": "legacy@myfit.local",
             # Hash non utilizzabile in login: serve solo per ownership dati preesistenti.
             "password_hash": "legacy$disabled",
+            "sex": "male",
         },
     )
     return int(inserted)
@@ -118,12 +119,14 @@ def _upgrade_legacy_schema(conn) -> None:
     schema = settings.db_schema
     missing_workout_owner = not _column_exists(conn, "workouts", "user_id")
     missing_session_owner = not _column_exists(conn, "workout_sessions", "user_id")
-    if not missing_workout_owner and not missing_session_owner:
-        return
+    has_legacy_ownership_gap = missing_workout_owner or missing_session_owner
 
-    legacy_user_id = _ensure_legacy_user(conn)
+    if has_legacy_ownership_gap:
+        legacy_user_id = _ensure_legacy_user(conn)
+    else:
+        legacy_user_id = None
 
-    if missing_workout_owner:
+    if missing_workout_owner and legacy_user_id is not None:
         conn.execute(text(f"ALTER TABLE {schema}.workouts ADD COLUMN user_id INTEGER"))
         conn.execute(
             text(f"UPDATE {schema}.workouts SET user_id = :legacy_user_id WHERE user_id IS NULL"),
@@ -144,7 +147,7 @@ def _upgrade_legacy_schema(conn) -> None:
 
     conn.execute(text(f"CREATE INDEX IF NOT EXISTS ix_workouts_user_id ON {schema}.workouts (user_id)"))
 
-    if missing_session_owner:
+    if missing_session_owner and legacy_user_id is not None:
         conn.execute(text(f"ALTER TABLE {schema}.workout_sessions ADD COLUMN user_id INTEGER"))
         conn.execute(
             text(
@@ -180,6 +183,36 @@ def _upgrade_legacy_schema(conn) -> None:
             )
         )
 
-    conn.execute(
-        text(f"CREATE INDEX IF NOT EXISTS ix_workout_sessions_user_id ON {schema}.workout_sessions (user_id)")
-    )
+    conn.execute(text(f"CREATE INDEX IF NOT EXISTS ix_workout_sessions_user_id ON {schema}.workout_sessions (user_id)"))
+
+    if not _column_exists(conn, "users", "sex"):
+        conn.execute(text(f"ALTER TABLE {schema}.users ADD COLUMN sex VARCHAR(10)"))
+        conn.execute(text(f"UPDATE {schema}.users SET sex = 'male' WHERE sex IS NULL"))
+        conn.execute(text(f"ALTER TABLE {schema}.users ALTER COLUMN sex SET NOT NULL"))
+        conn.execute(text(f"ALTER TABLE {schema}.users ALTER COLUMN sex SET DEFAULT 'male'"))
+
+    if not _column_exists(conn, "workouts", "sport_type"):
+        conn.execute(text(f"ALTER TABLE {schema}.workouts ADD COLUMN sport_type VARCHAR(30)"))
+        conn.execute(text(f"UPDATE {schema}.workouts SET sport_type = 'gym' WHERE sport_type IS NULL"))
+        conn.execute(text(f"ALTER TABLE {schema}.workouts ALTER COLUMN sport_type SET NOT NULL"))
+        conn.execute(text(f"ALTER TABLE {schema}.workouts ALTER COLUMN sport_type SET DEFAULT 'gym'"))
+
+    if not _column_exists(conn, "workouts", "course_name"):
+        conn.execute(text(f"ALTER TABLE {schema}.workouts ADD COLUMN course_name VARCHAR(120)"))
+
+    if not _column_exists(conn, "workouts", "detail_json"):
+        conn.execute(text(f"ALTER TABLE {schema}.workouts ADD COLUMN detail_json TEXT"))
+
+    if not _column_exists(conn, "workout_sessions", "schedule_id"):
+        conn.execute(text(f"ALTER TABLE {schema}.workout_sessions ADD COLUMN schedule_id INTEGER"))
+
+    if not _constraint_exists(conn, "workout_sessions_schedule_id_fkey"):
+        conn.execute(
+            text(
+                f"""
+                ALTER TABLE {schema}.workout_sessions
+                ADD CONSTRAINT workout_sessions_schedule_id_fkey
+                FOREIGN KEY (schedule_id) REFERENCES {schema}.workout_schedules(id) ON DELETE SET NULL
+                """
+            )
+        )
